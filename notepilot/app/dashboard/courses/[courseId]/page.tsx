@@ -1,16 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import CourseClient from './CourseClient'
+import AddMaterialPanel from './AddMaterialPanel'
 
 export default async function CoursePage({
   params,
   searchParams,
 }: {
   params: Promise<{ courseId: string }>
-  searchParams: Promise<{ view?: string }>
+  searchParams: Promise<{ view?: string; add?: string }>
 }) {
   const { courseId } = await params
-  const { view } = await searchParams
+  const { view, add } = await searchParams
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -24,6 +25,11 @@ export default async function CoursePage({
     .single()
 
   if (!course) notFound()
+
+  // Add material panel — no need for full course data
+  if (add === 'book' || add === 'slide' || add === 'exam') {
+    return <AddMaterialPanel courseId={courseId} initialType={add} />
+  }
 
   const [{ data: books }, { data: slides }, { data: exams }] = await Promise.all([
     supabase.from('books').select('id, title, author, processing_status, processing_error, created_at').eq('course_id', courseId).order('created_at', { ascending: false }),
