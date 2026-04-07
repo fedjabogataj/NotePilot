@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createCourse, deleteCourse, updateCourse } from './actions'
 
 type Course = {
@@ -117,8 +118,17 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
               key={course.id}
               className="group relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:shadow-md dark:hover:shadow-none dark:hover:border-gray-700 transition-all"
             >
-              {/* Actions — visible on hover */}
-              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Invisible link covering the card — hidden during inline edit */}
+              {editingId !== course.id && (
+                <Link
+                  href={`/dashboard/courses/${course.id}`}
+                  className="absolute inset-0 z-0 rounded-xl"
+                  aria-label={course.name}
+                />
+              )}
+
+              {/* Actions — visible on hover, z-index above the link */}
+              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <button
                   onClick={() => startEdit(course)}
                   title="Rename"
