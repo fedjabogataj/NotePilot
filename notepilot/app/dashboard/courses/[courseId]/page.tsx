@@ -43,32 +43,34 @@ export default async function CoursePage({
   return (
     <div>
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 mb-6">
+      <div className="flex items-center gap-1.5 mb-6" style={{ fontSize: 13, color: '#e8e8e8', opacity: 0.45 }}>
         <Link
           href="/dashboard"
-          className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          className="transition-opacity hover:opacity-80"
+          style={{ color: '#e8e8e8' }}
         >
           Courses
         </Link>
         <span>/</span>
-        <span className="text-gray-700 dark:text-gray-300">{course.name}</span>
+        <span style={{ opacity: 1 / 0.45 * 0.7, color: '#e8e8e8' }}>{course.name}</span>
       </div>
 
       {/* Course header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{course.name}</h1>
-        <div className="flex items-center gap-2 mt-1.5">
+        <h1 className="font-bold" style={{ fontSize: 32, color: '#e8e8e8' }}>{course.name}</h1>
+        <div className="flex items-center gap-2 mt-1.5" style={{ fontSize: 13, color: '#e8e8e8', opacity: 0.45 }}>
           {course.code && (
-            <span className="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-gray-600 dark:text-gray-300">
+            <span
+              className="font-mono px-2 py-0.5 rounded"
+              style={{ background: '#2a2a2a', opacity: 1, color: '#e8e8e8' }}
+            >
               {course.code}
             </span>
           )}
-          {course.semester && (
-            <span className="text-sm text-gray-500 dark:text-gray-400">{course.semester}</span>
-          )}
+          {course.semester && <span>{course.semester}</span>}
         </div>
         {course.description && (
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
+          <p className="mt-2 max-w-2xl" style={{ fontSize: 14, color: '#e8e8e8', opacity: 0.5 }}>
             {course.description}
           </p>
         )}

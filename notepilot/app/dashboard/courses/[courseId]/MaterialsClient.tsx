@@ -41,34 +41,49 @@ type Exam = {
 type Tab = 'books' | 'slides' | 'exams'
 type ModalType = 'book' | 'slide' | 'exam' | null
 
-const inputCls =
-  'w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+// ── Dark input ─────────────────────────────────────────────────────────────
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+const inputBaseStyle = {
+  background: '#1a1a1a',
+  border: '1px solid #2e2e2e',
+  color: '#e8e8e8',
+} as const
+
+function DarkInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
-      {children}
-    </div>
+    <input
+      {...props}
+      className="w-full rounded-lg px-3 py-2 text-[14px] outline-none transition-all"
+      style={inputBaseStyle}
+      onFocus={e => {
+        e.currentTarget.style.borderColor = '#444444'
+        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(233,168,76,0.15)'
+        props.onFocus?.(e)
+      }}
+      onBlur={e => {
+        e.currentTarget.style.borderColor = '#2e2e2e'
+        e.currentTarget.style.boxShadow = 'none'
+        props.onBlur?.(e)
+      }}
+    />
   )
 }
 
-function StatusBadge({ status }: { status: ProcessingStatus }) {
-  const styles: Record<ProcessingStatus, string> = {
-    pending:    'bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400',
-    processing: 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400',
-    ready:      'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400',
-    failed:     'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400',
-  }
-  const labels: Record<ProcessingStatus, string> = {
-    pending: 'Pending', processing: 'Processing', ready: 'Ready', failed: 'Failed',
-  }
+// ── StatusDot ──────────────────────────────────────────────────────────────
+
+function StatusDot({ status }: { status: ProcessingStatus }) {
+  if (status === 'ready') return null
+  const color = status === 'failed' ? '#f04438' : '#e9a84c'
   return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${styles[status]}`}>
-      {labels[status]}
-    </span>
+    <span
+      className="inline-block rounded-full shrink-0"
+      style={{ width: 6, height: 6, background: color }}
+      title={status}
+    />
   )
 }
+
+// ── Material list ──────────────────────────────────────────────────────────
 
 type ListItem = {
   id: string
@@ -92,35 +107,62 @@ function MaterialList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="text-center py-16 text-gray-400 dark:text-gray-600">
-        <p className="text-sm">{emptyText}</p>
+      <div className="flex items-center justify-center py-16" style={{ color: '#e8e8e8', opacity: 0.3 }}>
+        <p className="text-[13px]">{emptyText}</p>
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-gray-100 dark:divide-gray-800">
+    <div style={{ borderTop: '1px solid #2e2e2e' }}>
       {items.map(item => (
-        <div key={item.id} className="group flex items-center justify-between py-3.5 gap-4">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.title}</p>
-            {item.subtitle && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.subtitle}</p>
-            )}
-            {item.errorMessage && (
-              <p className="text-xs text-red-500 dark:text-red-400 mt-0.5 truncate" title={item.errorMessage}>
-                {item.errorMessage}
+        <div
+          key={item.id}
+          className="group flex items-center justify-between gap-4"
+          style={{
+            padding: '12px 0',
+            borderBottom: '1px solid #2e2e2e',
+          }}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <StatusDot status={item.status} />
+            <div className="min-w-0">
+              <p className="text-[14px] font-medium truncate" style={{ color: '#e8e8e8' }}>
+                {item.title}
               </p>
-            )}
+              {item.subtitle && (
+                <p className="text-[12px] mt-0.5 truncate" style={{ color: '#e8e8e8', opacity: 0.45 }}>
+                  {item.subtitle}
+                </p>
+              )}
+              {item.errorMessage && (
+                <p className="text-[12px] mt-0.5 truncate" style={{ color: '#f04438' }} title={item.errorMessage}>
+                  {item.errorMessage}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <StatusBadge status={item.status} />
-            {/* View button — only shown when file is ready */}
+
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Status label for non-ready */}
+            {item.status !== 'ready' && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full" style={{
+                color: item.status === 'failed' ? '#f04438' : '#e9a84c',
+                background: item.status === 'failed' ? 'rgba(240,68,56,0.1)' : 'rgba(233,168,76,0.1)',
+              }}>
+                {item.status === 'pending' ? 'Pending' : item.status === 'processing' ? 'Processing…' : 'Failed'}
+              </span>
+            )}
+
+            {/* View */}
             {item.status === 'ready' && (
               <button
                 onClick={() => onView(item.type, item.id)}
                 title="Open file"
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="flex items-center justify-center rounded transition-all opacity-0 group-hover:opacity-100"
+                style={{ width: 28, height: 28, color: '#e8e8e8' }}
+                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#2a2a2a')}
+                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -129,10 +171,21 @@ function MaterialList({
                 </svg>
               </button>
             )}
+
+            {/* Delete */}
             <button
               onClick={() => onDelete(item.id, item.title)}
               title="Delete"
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+              className="flex items-center justify-center rounded transition-all opacity-0 group-hover:opacity-100"
+              style={{ width: 28, height: 28, color: '#e8e8e8' }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = 'rgba(240,68,56,0.15)'
+                ;(e.currentTarget as HTMLElement).style.color = '#f04438'
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = 'transparent'
+                ;(e.currentTarget as HTMLElement).style.color = '#e8e8e8'
+              }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />
@@ -147,6 +200,8 @@ function MaterialList({
     </div>
   )
 }
+
+// ── Main component ─────────────────────────────────────────────────────────
 
 export default function MaterialsClient({
   courseId,
@@ -175,7 +230,7 @@ export default function MaterialsClient({
   const fileRef = useRef<HTMLInputElement>(null)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
-  // Poll every 3 s while any book or slide is still processing.
+  // Poll every 3s while any book/slide is processing
   useEffect(() => {
     if (!polling) return
 
@@ -186,14 +241,8 @@ export default function MaterialsClient({
       if (!active) return
 
       const [booksRes, slidesRes] = await Promise.all([
-        supabase
-          .from('books')
-          .select('id, processing_status, processing_error')
-          .eq('course_id', courseId),
-        supabase
-          .from('lecture_slides')
-          .select('id, processing_status, processing_error')
-          .eq('course_id', courseId),
+        supabase.from('books').select('id, processing_status, processing_error').eq('course_id', courseId),
+        supabase.from('lecture_slides').select('id, processing_status, processing_error').eq('course_id', courseId),
       ])
 
       if (!active) return
@@ -215,7 +264,6 @@ export default function MaterialsClient({
         )
       }
 
-      // Stop polling once all items have settled
       const allData = [...(booksRes.data ?? []), ...(slidesRes.data ?? [])]
       const stillPending = allData.some(
         i => i.processing_status === 'pending' || i.processing_status === 'processing'
@@ -223,10 +271,7 @@ export default function MaterialsClient({
       if (!stillPending) setPolling(false)
     }, 3000)
 
-    return () => {
-      active = false
-      clearInterval(interval)
-    }
+    return () => { active = false; clearInterval(interval) }
   }, [polling, courseId])
 
   function openModal(type: ModalType) {
@@ -247,7 +292,6 @@ export default function MaterialsClient({
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) {
-      // Strip extension and replace underscores/hyphens with spaces
       const name = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ')
       setAutoTitle(name)
     }
@@ -262,7 +306,6 @@ export default function MaterialsClient({
     const get = (name: string) =>
       ((form.elements.namedItem(name) as HTMLInputElement | null)?.value ?? '').trim()
 
-    // Capture values before any async operations
     const title = autoTitle.trim() || file.name.replace(/\.[^.]+$/, '')
     const author = get('author')
     const lectureNumber = parseInt(get('lecture_number'))
@@ -281,12 +324,9 @@ export default function MaterialsClient({
           title, author: author || undefined,
           fileName: file.name, fileType: file.type, fileSize: file.size,
         })
-        const { error: upErr } = await supabase.storage
-          .from('materials')
-          .uploadToSignedUrl(result.storagePath, result.token, file)
+        const { error: upErr } = await supabase.storage.from('materials').uploadToSignedUrl(result.storagePath, result.token, file)
         if (upErr) throw new Error(upErr.message)
 
-        // Add to list as pending, then process in the background
         setBooks(prev => [{
           id: result.bookId, title, author: author || null,
           processing_status: 'pending', processing_error: null,
@@ -294,8 +334,6 @@ export default function MaterialsClient({
         }, ...prev])
         setPolling(true)
         closeModal()
-
-        // Fire-and-forget — polling picks up status changes
         processBook(result.bookId, courseId).catch(console.error)
       }
 
@@ -305,9 +343,7 @@ export default function MaterialsClient({
           title, lectureNumber: lNum,
           fileName: file.name, fileType: file.type, fileSize: file.size,
         })
-        const { error: upErr } = await supabase.storage
-          .from('materials')
-          .uploadToSignedUrl(result.storagePath, result.token, file)
+        const { error: upErr } = await supabase.storage.from('materials').uploadToSignedUrl(result.storagePath, result.token, file)
         if (upErr) throw new Error(upErr.message)
 
         setSlides(prev => [{
@@ -317,7 +353,6 @@ export default function MaterialsClient({
         }, ...prev])
         setPolling(true)
         closeModal()
-
         processLectureSlide(result.slideId, courseId).catch(console.error)
       }
 
@@ -326,9 +361,7 @@ export default function MaterialsClient({
           title, examDate: examDate || undefined,
           fileName: file.name, fileType: file.type, fileSize: file.size,
         })
-        const { error: upErr } = await supabase.storage
-          .from('materials')
-          .uploadToSignedUrl(result.storagePath, result.token, file)
+        const { error: upErr } = await supabase.storage.from('materials').uploadToSignedUrl(result.storagePath, result.token, file)
         if (upErr) throw new Error(upErr.message)
 
         setExams(prev => [{
@@ -372,34 +405,44 @@ export default function MaterialsClient({
     }
   }
 
-  const tabBtn = (t: Tab, label: string) => (
-    <button
-      onClick={() => setTab(t)}
-      className={`px-4 py-2.5 text-sm font-medium transition-colors ${
-        tab === t
-          ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent'
-      }`}
-    >
-      {label}
-    </button>
-  )
-
   const addBtnLabel = tab === 'books' ? 'Add Book' : tab === 'slides' ? 'Add Slides' : 'Add Exam'
   const modalType: ModalType = tab === 'books' ? 'book' : tab === 'slides' ? 'slide' : 'exam'
 
+  function TabBtn({ t, label }: { t: Tab; label: string }) {
+    const active = tab === t
+    return (
+      <button
+        onClick={() => setTab(t)}
+        className="px-4 py-2.5 text-[13px] font-medium transition-colors"
+        style={{
+          color: active ? '#e8e8e8' : '#e8e8e8',
+          opacity: active ? 1 : 0.45,
+          borderBottom: active ? '2px solid #e9a84c' : '2px solid transparent',
+        }}
+      >
+        {label}
+      </button>
+    )
+  }
+
   return (
     <div>
-      {/* Section header */}
-      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 mb-0">
+      {/* Tab bar */}
+      <div
+        className="flex items-center justify-between"
+        style={{ borderBottom: '1px solid #2e2e2e', marginBottom: 0 }}
+      >
         <div className="flex">
-          {tabBtn('books', `Books${books.length ? ` (${books.length})` : ''}`)}
-          {tabBtn('slides', `Slides${slides.length ? ` (${slides.length})` : ''}`)}
-          {tabBtn('exams', `Exams${exams.length ? ` (${exams.length})` : ''}`)}
+          <TabBtn t="books" label={`Books${books.length ? ` (${books.length})` : ''}`} />
+          <TabBtn t="slides" label={`Slides${slides.length ? ` (${slides.length})` : ''}`} />
+          <TabBtn t="exams" label={`Exams${exams.length ? ` (${exams.length})` : ''}`} />
         </div>
         <button
           onClick={() => openModal(modalType)}
-          className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors"
+          style={{ background: '#333333', color: '#e8e8e8' }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#3d3d3d')}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = '#333333')}
         >
           <span className="text-base leading-none">+</span>
           {addBtnLabel}
@@ -407,7 +450,7 @@ export default function MaterialsClient({
       </div>
 
       {/* Tab content */}
-      <div className="pt-2">
+      <div className="pt-0">
         {tab === 'books' && (
           <MaterialList
             items={books.map(b => ({
@@ -452,24 +495,33 @@ export default function MaterialsClient({
       {/* Upload dialog */}
       <dialog
         ref={dialogRef}
-        className="rounded-xl shadow-xl p-0 w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 backdrop:bg-black/50"
+        className="rounded-xl p-0 w-full max-w-md backdrop:bg-black/60"
+        style={{
+          background: '#222222',
+          border: '1px solid #2e2e2e',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+        }}
         onClose={() => { setModal(null); setFormError('') }}
       >
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-[18px] font-semibold" style={{ color: '#e8e8e8' }}>
             {modal === 'book' && 'Add Book'}
             {modal === 'slide' && 'Add Slide Deck'}
             {modal === 'exam' && 'Add Exam Paper'}
           </h2>
 
           {formError && (
-            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 px-3 py-2 rounded-lg">
+            <p
+              className="text-[13px] px-3 py-2 rounded-lg"
+              style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}
+            >
               {formError}
             </p>
           )}
 
-          <Field label="Title">
-            <input
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Title</label>
+            <DarkInput
               name="title"
               value={autoTitle}
               onChange={e => setAutoTitle(e.target.value)}
@@ -478,41 +530,47 @@ export default function MaterialsClient({
                 modal === 'slide' ? 'e.g. Lecture 3 — Sorting Algorithms' :
                 'e.g. Midterm 2025'
               }
-              className={inputCls}
             />
-          </Field>
+          </div>
 
           {modal === 'book' && (
-            <Field label="Author">
-              <input name="author" placeholder="e.g. Cormen, Leiserson, Rivest, Stein" className={inputCls} />
-            </Field>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Author</label>
+              <DarkInput name="author" placeholder="e.g. Cormen, Leiserson, Rivest, Stein" />
+            </div>
           )}
 
           {modal === 'slide' && (
-            <Field label="Lecture Number">
-              <input name="lecture_number" type="number" min={1} placeholder="e.g. 3" className={inputCls} />
-            </Field>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Lecture Number</label>
+              <DarkInput name="lecture_number" type="number" min={1} placeholder="e.g. 3" />
+            </div>
           )}
 
           {modal === 'exam' && (
-            <Field label="Exam Date">
-              <input name="exam_date" type="date" className={inputCls} />
-            </Field>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Exam Date</label>
+              <DarkInput name="exam_date" type="date" />
+            </div>
           )}
 
-          <Field label="File * (PDF or PowerPoint, max 50 MB)">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>
+              File * (PDF or PowerPoint, max 50 MB)
+            </label>
             <input
               ref={fileRef}
               type="file"
               required
               accept=".pdf,.pptx,.ppt"
               onChange={handleFileChange}
-              className="text-sm text-gray-700 dark:text-gray-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-900 file:cursor-pointer transition-colors"
+              className="text-[13px]"
+              style={{ color: '#e8e8e8', opacity: 0.7 }}
             />
-          </Field>
+          </div>
 
           {uploading && (
-            <p className="text-sm text-blue-600 dark:text-blue-400 text-center py-1">
+            <p className="text-[13px] text-center py-1" style={{ color: '#e9a84c' }}>
               Uploading… please wait.
             </p>
           )}
@@ -522,14 +580,26 @@ export default function MaterialsClient({
               type="button"
               onClick={closeModal}
               disabled={uploading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-50"
+              style={{ color: '#e8e8e8', opacity: 0.7 }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = '#2a2a2a'
+                ;(e.currentTarget as HTMLElement).style.opacity = '1'
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = 'transparent'
+                ;(e.currentTarget as HTMLElement).style.opacity = '0.7'
+              }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={uploading}
-              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+              className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-60"
+              style={{ background: '#333333', color: '#e8e8e8' }}
+              onMouseEnter={e => { if (!uploading) (e.currentTarget as HTMLElement).style.background = '#3d3d3d' }}
+              onMouseLeave={e => { if (!uploading) (e.currentTarget as HTMLElement).style.background = '#333333' }}
             >
               {uploading ? 'Uploading…' : 'Upload'}
             </button>

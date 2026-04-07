@@ -15,11 +15,34 @@ function getStrength(password: string): number {
 }
 
 const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong']
-const strengthColor = ['', 'text-red-500', 'text-orange-400', 'text-yellow-500', 'text-green-500']
-const strengthBarColor = ['', 'bg-red-500', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500']
+const strengthColor = ['', '#f04438', '#fb923c', '#eab308', '#22c55e']
+const strengthBarBg  = ['', '#f04438', '#fb923c', '#eab308', '#22c55e']
 
-const inputClass =
-  'border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+const inputStyle = {
+  background: '#1a1a1a',
+  border: '1px solid #2e2e2e',
+  color: '#e8e8e8',
+} as const
+
+function DarkInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      {...props}
+      className="w-full rounded-lg px-3 py-2 text-[14px] outline-none transition-all"
+      style={inputStyle}
+      onFocus={e => {
+        e.currentTarget.style.borderColor = '#444444'
+        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(233,168,76,0.15)'
+        props.onFocus?.(e)
+      }}
+      onBlur={e => {
+        e.currentTarget.style.borderColor = '#2e2e2e'
+        e.currentTarget.style.boxShadow = 'none'
+        props.onBlur?.(e)
+      }}
+    />
+  )
+}
 
 export default function SignupPage() {
   const router = useRouter()
@@ -69,13 +92,13 @@ export default function SignupPage() {
   if (done) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Check your email</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="text-[24px] font-semibold" style={{ color: '#e8e8e8' }}>Check your email</h1>
+        <p className="text-[14px]" style={{ color: '#e8e8e8', opacity: 0.6 }}>
           We sent a confirmation link to{' '}
-          <strong className="text-gray-700 dark:text-gray-200">{email}</strong>.
+          <strong style={{ color: '#e8e8e8', opacity: 1 }}>{email}</strong>.
           Click it to activate your account.
         </p>
-        <Link href="/login" className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium">
+        <Link href="/login" className="text-[13px] font-medium" style={{ color: '#e9a84c' }}>
           Back to sign in
         </Link>
       </div>
@@ -85,70 +108,66 @@ export default function SignupPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Create account</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Start using NotePilot for free</p>
+        <h1 className="text-[24px] font-semibold" style={{ color: '#e8e8e8' }}>Create account</h1>
+        <p className="text-[14px] mt-1" style={{ color: '#e8e8e8', opacity: 0.5 }}>Start using NotePilot for free</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {error && (
-          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 px-3 py-2 rounded-lg">
+          <div
+            className="text-[13px] px-3 py-2 rounded-lg"
+            style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}
+          >
             {error}
           </div>
         )}
 
-        {/* Name row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">First name</label>
-            <input
+            <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>First name</label>
+            <DarkInput
               type="text"
               value={firstName}
               onChange={e => setFirstName(e.target.value)}
               required
               autoComplete="given-name"
               placeholder="Jane"
-              className={inputClass}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Last name</label>
-            <input
+            <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Last name</label>
+            <DarkInput
               type="text"
               value={lastName}
               onChange={e => setLastName(e.target.value)}
               required
               autoComplete="family-name"
               placeholder="Smith"
-              className={inputClass}
             />
           </div>
         </div>
 
-        {/* Email */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-          <input
+          <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Email</label>
+          <DarkInput
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
             autoComplete="email"
             placeholder="jane@example.com"
-            className={inputClass}
           />
         </div>
 
-        {/* Password + strength */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-          <input
+          <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Password</label>
+          <DarkInput
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
             autoComplete="new-password"
             placeholder="Min. 8 characters"
-            className={inputClass}
           />
           {password && (
             <div className="flex flex-col gap-1 mt-0.5">
@@ -156,13 +175,12 @@ export default function SignupPage() {
                 {[1, 2, 3, 4].map(i => (
                   <div
                     key={i}
-                    className={`h-1 flex-1 rounded-full transition-colors ${
-                      i <= strength ? strengthBarColor[strength] : 'bg-gray-200 dark:bg-gray-700'
-                    }`}
+                    className="h-1 flex-1 rounded-full transition-colors"
+                    style={{ background: i <= strength ? strengthBarBg[strength] : '#333333' }}
                   />
                 ))}
               </div>
-              <p className={`text-xs ${strengthColor[strength]}`}>
+              <p className="text-[12px]" style={{ color: strengthColor[strength] }}>
                 {strengthLabel[strength]}
                 {strength === 1 && ' — add uppercase, numbers or symbols'}
                 {strength === 2 && ' — add more variety to strengthen'}
@@ -171,35 +189,36 @@ export default function SignupPage() {
           )}
         </div>
 
-        {/* Confirm password */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Confirm password</label>
-          <input
+          <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Confirm password</label>
+          <DarkInput
             type="password"
             value={confirm}
             onChange={e => setConfirm(e.target.value)}
             required
             autoComplete="new-password"
             placeholder="Re-enter your password"
-            className={`${inputClass} ${!passwordsMatch ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
           />
           {!passwordsMatch && (
-            <p className="text-xs text-red-500 dark:text-red-400">Passwords do not match</p>
+            <p className="text-[12px]" style={{ color: '#f04438' }}>Passwords do not match</p>
           )}
         </div>
 
         <button
           type="submit"
           disabled={loading || !passwordsMatch}
-          className="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60 transition-colors mt-1"
+          className="px-4 py-2.5 rounded-lg text-[14px] font-medium transition-colors disabled:opacity-60"
+          style={{ background: '#e9a84c', color: '#111111' }}
+          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.background = '#f0b85e' }}
+          onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLElement).style.background = '#e9a84c' }}
         >
           {loading ? 'Creating account…' : 'Create account'}
         </button>
       </form>
 
-      <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+      <p className="text-[13px] text-center" style={{ color: '#e8e8e8', opacity: 0.5 }}>
         Already have an account?{' '}
-        <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+        <Link href="/login" className="font-medium" style={{ color: '#e9a84c', opacity: 1 }}>
           Sign in
         </Link>
       </p>
