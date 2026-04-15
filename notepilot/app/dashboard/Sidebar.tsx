@@ -366,9 +366,6 @@ export default function Sidebar({
         {myFolders.map(folder => {
           const isFolderOpen = openFolders.has(folder.id)
           const folderMenuItems: MenuItem[] = [
-            { kind: 'item', icon: '📁', label: 'New Subfolder', action: () => doCreateFolder(courseId, folder.id) },
-            { kind: 'separator' },
-            { kind: 'item', icon: '✏️', label: 'Rename', action: () => doRenameFolder(folder.id, folder.name) },
             { kind: 'item', icon: '🗑', label: 'Delete Folder', danger: true, action: () => doDeleteFolder(folder.id, folder.name) },
           ]
 
@@ -390,7 +387,7 @@ export default function Sidebar({
                   }
                   <span className="text-[13px] truncate" style={{ opacity: 0.72 }}>{folder.name}</span>
                 </span>
-                <PlusBtn onClick={() => router.push(`/dashboard/courses/${courseId}?add=folder&parent=${folder.id}`)} />
+                <PlusBtn onClick={() => router.push(`/dashboard/courses/${courseId}?add=book&parent=${folder.id}`)} />
                 <MoreBtn onOpen={anchor => setMenu({ items: folderMenuItems, anchor })} />
               </div>
               {isFolderOpen && renderLevel(courseId, folder.id, depth + 1)}
@@ -522,15 +519,6 @@ export default function Sidebar({
                   const courseOpen = openCourses.has(course.id)
 
                   const courseMenuItems: MenuItem[] = [
-                    { kind: 'item', icon: 'ℹ️', label: 'Course Info', action: () => router.push(courseHref) },
-                    { kind: 'separator' },
-                    { kind: 'item', icon: '📕', label: 'Add Book',       action: () => router.push(`${courseHref}?add=book`) },
-                    { kind: 'item', icon: '📊', label: 'Add Slide Deck', action: () => router.push(`${courseHref}?add=slide`) },
-                    { kind: 'item', icon: '📋', label: 'Add Exam Paper', action: () => router.push(`${courseHref}?add=exam`) },
-                    { kind: 'separator' },
-                    { kind: 'item', icon: '📁', label: 'New Folder', action: () => doCreateFolder(course.id, null) },
-                    { kind: 'separator' },
-                    { kind: 'item', icon: '✏️', label: 'Rename', disabled: true, action: () => {} },
                     { kind: 'item', icon: '🗑', label: 'Delete Course', danger: true, action: () => doDeleteCourse(course.id, course.name) },
                   ]
 
