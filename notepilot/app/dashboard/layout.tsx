@@ -14,8 +14,9 @@ export type SidebarCourse = {
 export type SidebarFolder = {
   id: string
   name: string
-  course_id: string
+  course_id: string | null    // null = not tied to a specific course
   parent_folder_id: string | null
+  semester: string | null     // set for semester-level folders, null for home/course
 }
 
 export type SidebarMaterial = {
@@ -41,7 +42,7 @@ export default async function DashboardLayout({
     supabase.from('books').select('id, title, processing_status, course_id, folder_id').eq('user_id', user.id),
     supabase.from('lecture_slides').select('id, title, processing_status, course_id, folder_id').eq('user_id', user.id),
     supabase.from('exams').select('id, title, processing_status, course_id, folder_id').eq('user_id', user.id),
-    supabase.from('folders').select('id, name, course_id, parent_folder_id').eq('user_id', user.id).order('created_at', { ascending: true }),
+    supabase.from('folders').select('id, name, course_id, parent_folder_id, semester').eq('user_id', user.id).order('created_at', { ascending: true }),
   ])
 
   const materials: SidebarMaterial[] = [

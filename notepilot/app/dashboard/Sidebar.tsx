@@ -343,6 +343,64 @@ export default function Sidebar({
     catch (err) { alert(err instanceof Error ? err.message : 'Failed to move file') }
   }
 
+  // ── Non-course folder renderer ─────────────────────────────────────────────
+  // Renders folders that are not tied to a course (course_id = null).
+  //
+  // At the root level (parentFolderId = null):
+  //   - semesterFilter = undefined  → home-level folders (semester = null)
+  //   - semesterFilter = string     → semester-level folders (semester = that string)
+  // For nested levels (parentFolderId set) the semester filter is ignored;
+  // sub-folders are matched purely by parent_folder_id.
+
+  function renderHomeLevel(parentFolderId: string | null, depth: number, semesterFilter?: string | null): React.ReactNode {
+    const indent = 20 + depth * INDENT_STEP
+
+    const myFolders = parentFolderId !== null
+      // sub-folders: match by parent only
+      ? folders.filter(f => f.course_id === null && f.parent_folder_id === parentFolderId)
+      // root level: additionally filter by semester
+      : semesterFilter !== undefined
+        ? folders.filter(f => f.course_id === null && f.parent_folder_id === null && f.semester === semesterFilter)
+        : folders.filter(f => f.course_id === null && f.parent_folder_id === null && f.semester === null)
+
+    if (myFolders.length === 0) return null
+
+    return (
+      <>
+        {myFolders.map(folder => {
+          const isFolderOpen = openFolders.has(folder.id)
+          const folderMenuItems: MenuItem[] = [
+            { kind: 'item', icon: '🗑', label: 'Delete Folder', danger: true, action: () => doDeleteFolder(folder.id, folder.name) },
+          ]
+          return (
+            <div key={folder.id}>
+              <div
+                className="group flex items-center mx-1 rounded-[4px] transition-all"
+                style={{ height: 28, paddingLeft: indent }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1e1e1e' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                <button onClick={() => toggleFolder(folder.id)} className="shrink-0 p-0.5 mr-0.5" style={{ color: '#e8e8e8' }}>
+                  <ChevronRight size={11} style={{ opacity: 0.35, transform: isFolderOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
+                </button>
+                <span className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
+                  {isFolderOpen
+                    ? <FolderOpen size={14} style={{ opacity: 0.65, flexShrink: 0, color: '#6b9fd4' }} />
+                    : <Folder    size={14} style={{ opacity: 0.65, flexShrink: 0, color: '#6b9fd4' }} />
+                  }
+                  <span className="text-[13px] truncate" style={{ opacity: 0.72 }}>{folder.name}</span>
+                </span>
+                <PlusBtn onClick={() => router.push(`/dashboard?add=item&parent=${folder.id}`)} />
+                <MoreBtn onOpen={anchor => setMenu({ items: folderMenuItems, anchor })} />
+              </div>
+              {isFolderOpen && renderHomeLevel(folder.id, depth + 1)}
+            </div>
+          )
+        })}
+      </>
+    )
+  }
+
   // ── Recursive folder/file renderer ────────────────────────────────────────
   // depth=0 is course root; each nested folder increments depth
 
@@ -387,7 +445,7 @@ export default function Sidebar({
                   }
                   <span className="text-[13px] truncate" style={{ opacity: 0.72 }}>{folder.name}</span>
                 </span>
-                <PlusBtn onClick={() => router.push(`/dashboard/courses/${courseId}?add=book&parent=${folder.id}`)} />
+                <PlusBtn onClick={() => router.push(`/dashboard?add=item&parent=${folder.id}`)} />
                 <MoreBtn onOpen={anchor => setMenu({ items: folderMenuItems, anchor })} />
               </div>
               {isFolderOpen && renderLevel(courseId, folder.id, depth + 1)}
@@ -473,8 +531,11 @@ export default function Sidebar({
 
           {homeOpen && (
             <div style={{ paddingLeft: 12 }}>
-              {courses.length === 0 && (
-                <p className="px-4 pt-1 text-[12px]" style={{ color: '#e8e8e8', opacity: 0.28 }}>No courses yet</p>
+              {/* Standalone folders at home level */}
+              {renderHomeLevel(null, 0)}
+
+              {courses.length === 0 && folders.filter(f => f.course_id === null && f.parent_folder_id === null && f.semester === null).length === 0 && (
+                <p className="px-4 pt-1 text-[12px]" style={{ color: '#e8e8e8', opacity: 0.28 }}>No items yet</p>
               )}
 
           {semesters.map(semester => {
@@ -510,8 +571,12 @@ export default function Sidebar({
                       {semLabel}
                     </span>
                   </Link>
+                  <PlusBtn onClick={() => router.push(`/dashboard?add=item&semester=${encodeURIComponent(semester)}`)} />
                   <MoreBtn onOpen={anchor => setMenu({ items: semMenuItems, anchor })} />
                 </div>
+
+                {/* Semester-level folders (before courses) */}
+                {semOpen && renderHomeLevel(null, 0, semester)}
 
                 {semOpen && semCourses.map(course => {
                   const courseHref = `/dashboard/courses/${course.id}`

@@ -3,18 +3,17 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { BookOpen, Folder, Book, Presentation, ClipboardList, FileText, ChevronRight } from 'lucide-react'
-import { createCourse } from './actions'
+import { createCourse, createFolder } from './actions'
 
 type ItemType = 'course' | 'folder' | 'book' | 'slide' | 'exam' | 'note'
 type Course = { id: string; name: string; code: string | null }
 
-// Types that navigate into a course's add-material flow
-const NEEDS_COURSE = new Set<ItemType>(['folder', 'book', 'slide', 'exam'])
+// Material types still need a course to be attached to
+const NEEDS_COURSE = new Set<ItemType>(['book', 'slide', 'exam'])
 const TYPE_ADD_PARAM: Partial<Record<ItemType, string>> = {
-  folder: 'folder',
-  book:   'book',
-  slide:  'slide',
-  exam:   'exam',
+  book:  'book',
+  slide: 'slide',
+  exam:  'exam',
 }
 
 const TYPE_CONFIG: Record<ItemType, { label: string; icon: React.ElementType; desc: string; available: boolean }> = {
@@ -61,7 +60,42 @@ function DarkTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) 
   )
 }
 
-export default function AddItemPanel({ courses }: { courses: Course[] }) {
+function ActionRow({ onCancel, submitLabel, disabled }: { onCancel: () => void; submitLabel: string; disabled: boolean }) {
+  return (
+    <div className="flex items-center justify-end gap-3" style={{ borderTop: '1px solid #2e2e2e', paddingTop: 20 }}>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors"
+        style={{ color: '#e8e8e8', opacity: 0.6 }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#2a2a2a'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.opacity = '0.6' }}
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        disabled={disabled}
+        className="px-5 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-50"
+        style={{ background: '#e9a84c', color: '#111111' }}
+        onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLElement).style.background = '#f0b85e' }}
+        onMouseLeave={e => { if (!disabled) (e.currentTarget as HTMLElement).style.background = '#e9a84c' }}
+      >
+        {submitLabel}
+      </button>
+    </div>
+  )
+}
+
+export default function AddItemPanel({
+  courses,
+  parentFolderId,
+  semester,
+}: {
+  courses: Course[]
+  parentFolderId: string | null
+  semester: string | null
+}) {
   const router = useRouter()
   const [type, setType] = useState<ItemType>('course')
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
@@ -75,11 +109,7 @@ export default function AddItemPanel({ courses }: { courses: Course[] }) {
     setError('')
   }
 
-  function handleContinueToCourse() {
-    if (!selectedCourseId) { setError('Please select a course'); return }
-    router.push(`/dashboard/courses/${selectedCourseId}?add=${TYPE_ADD_PARAM[type]}`)
-  }
-
+  // ── Course creation ────────────────────────────────────────────────────────
   function handleSubmitCourse(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
@@ -98,13 +128,39 @@ export default function AddItemPanel({ courses }: { courses: Course[] }) {
     })
   }
 
+  // ── Folder creation (independent of any course) ───────────────────────────
+  function handleSubmitFolder(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const name = ((e.currentTarget.elements.namedItem('name') as HTMLInputElement | null)?.value ?? '').trim()
+    if (!name) { setError('Folder name is required'); return }
+    setError('')
+    startTransition(async () => {
+      try {
+        // courseId = null; semester scopes the folder to a semester group if provided
+        await createFolder(null, parentFolderId, name, semester)
+        router.push('/dashboard')
+        router.refresh()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Something went wrong')
+      }
+    })
+  }
+
+  // ── Material types: pick a course, then redirect to its add-material page ─
+  function handleContinueToCourse() {
+    if (!selectedCourseId) { setError('Please select a course'); return }
+    const addParam = TYPE_ADD_PARAM[type]!
+    const parentParam = parentFolderId ? `&parent=${parentFolderId}` : ''
+    router.push(`/dashboard/courses/${selectedCourseId}?add=${addParam}${parentParam}`)
+  }
+
   const needsCourse = NEEDS_COURSE.has(type)
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto px-8" style={{ maxWidth: 680, paddingTop: 48, paddingBottom: 56 }}>
         <p className="text-[12px] uppercase tracking-widest mb-2" style={{ color: '#e8e8e8', opacity: 0.35, letterSpacing: '0.1em' }}>
-          Home
+          {parentFolderId ? 'Folder' : semester ? semester : 'Home'}
         </p>
         <h1 className="font-bold mb-8" style={{ fontSize: 28, color: '#e8e8e8' }}>Add New Item</h1>
 
@@ -143,7 +199,7 @@ export default function AddItemPanel({ courses }: { courses: Course[] }) {
           </div>
         </div>
 
-        {/* Course form */}
+        {/* ── Course form ──────────────────────────────────────────────────── */}
         {type === 'course' && (
           <form onSubmit={handleSubmitCourse} className="flex flex-col gap-6">
             <Field label="Name *">
@@ -160,98 +216,76 @@ export default function AddItemPanel({ courses }: { courses: Course[] }) {
             <Field label="Description">
               <DarkTextarea name="description" rows={3} placeholder="Optional" />
             </Field>
-
-            {error && (
-              <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>
-                {error}
-              </p>
-            )}
-
-            <div className="flex items-center justify-end gap-3" style={{ borderTop: '1px solid #2e2e2e', paddingTop: 20 }}>
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors"
-                style={{ color: '#e8e8e8', opacity: 0.6 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#2a2a2a'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.opacity = '0.6' }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isPending}
-                className="px-5 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-50"
-                style={{ background: '#e9a84c', color: '#111111' }}
-                onMouseEnter={e => { if (!isPending) (e.currentTarget as HTMLElement).style.background = '#f0b85e' }}
-                onMouseLeave={e => { if (!isPending) (e.currentTarget as HTMLElement).style.background = '#e9a84c' }}
-              >
-                {isPending ? 'Creating…' : 'Create Course'}
-              </button>
-            </div>
+            {error && <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>{error}</p>}
+            <ActionRow onCancel={() => router.back()} submitLabel={isPending ? 'Creating…' : 'Create Course'} disabled={isPending} />
           </form>
         )}
 
-        {/* Course picker for material/folder types */}
+        {/* ── Folder form (no course required) ────────────────────────────── */}
+        {type === 'folder' && (
+          <form onSubmit={handleSubmitFolder} className="flex flex-col gap-6">
+            <Field label="Name *">
+              <DarkInput name="name" required placeholder="e.g. Research, Week 1, Semester 1…" autoFocus />
+            </Field>
+            {error && <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>{error}</p>}
+            <ActionRow onCancel={() => router.back()} submitLabel={isPending ? 'Creating…' : 'Create Folder'} disabled={isPending} />
+          </form>
+        )}
+
+        {/* ── Material types: course picker ────────────────────────────────── */}
         {needsCourse && (
           <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-[13px] font-medium mb-3" style={{ color: '#e8e8e8', opacity: 0.65 }}>
-                Select a course to add this {TYPE_CONFIG[type].label.toLowerCase()} to
-              </p>
+            <p className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.65 }}>
+              Select a course to add this {TYPE_CONFIG[type].label.toLowerCase()} to
+            </p>
 
-              {courses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ background: '#1a1a1a', border: '1px solid #2e2e2e' }}>
-                  <p className="text-[13px] mb-1" style={{ color: '#e8e8e8', opacity: 0.4 }}>No courses yet</p>
-                  <button
-                    type="button"
-                    onClick={() => handleTypeChange('course')}
-                    className="text-[12px] mt-2 transition-colors"
-                    style={{ color: '#e9a84c', opacity: 0.8 }}
-                    onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
-                    onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '0.8')}
-                  >
-                    Create a course first →
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  {courses.map(course => {
-                    const selected = selectedCourseId === course.id
-                    return (
-                      <button
-                        key={course.id}
-                        type="button"
-                        onClick={() => { setSelectedCourseId(course.id); setError('') }}
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all"
-                        style={{
-                          background: selected ? '#2a2a2a' : '#1a1a1a',
-                          border: `1px solid ${selected ? '#e9a84c' : '#2e2e2e'}`,
-                          color: '#e8e8e8',
-                        }}
-                        onMouseEnter={e => { if (!selected) (e.currentTarget as HTMLElement).style.borderColor = '#3a3a3a' }}
-                        onMouseLeave={e => { if (!selected) (e.currentTarget as HTMLElement).style.borderColor = '#2e2e2e' }}
-                      >
-                        <BookOpen size={14} style={{ opacity: selected ? 0.8 : 0.4, flexShrink: 0 }} />
-                        <span className="text-[13px]" style={{ opacity: selected ? 1 : 0.72 }}>{course.name}</span>
-                        {course.code && (
-                          <span className="ml-auto font-mono text-[11px] px-1.5 py-0.5 rounded" style={{ background: '#2a2a2a', opacity: 0.6 }}>
-                            {course.code}
-                          </span>
-                        )}
-                        {selected && <ChevronRight size={13} style={{ opacity: 0.5, marginLeft: course.code ? 0 : 'auto' }} />}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {error && (
-              <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>
-                {error}
-              </p>
+            {courses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ background: '#1a1a1a', border: '1px solid #2e2e2e' }}>
+                <p className="text-[13px] mb-1" style={{ color: '#e8e8e8', opacity: 0.4 }}>No courses yet</p>
+                <button
+                  type="button"
+                  onClick={() => handleTypeChange('course')}
+                  className="text-[12px] mt-2 transition-colors"
+                  style={{ color: '#e9a84c', opacity: 0.8 }}
+                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
+                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '0.8')}
+                >
+                  Create a course first →
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {courses.map(course => {
+                  const selected = selectedCourseId === course.id
+                  return (
+                    <button
+                      key={course.id}
+                      type="button"
+                      onClick={() => { setSelectedCourseId(course.id); setError('') }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all"
+                      style={{
+                        background: selected ? '#2a2a2a' : '#1a1a1a',
+                        border: `1px solid ${selected ? '#e9a84c' : '#2e2e2e'}`,
+                        color: '#e8e8e8',
+                      }}
+                      onMouseEnter={e => { if (!selected) (e.currentTarget as HTMLElement).style.borderColor = '#3a3a3a' }}
+                      onMouseLeave={e => { if (!selected) (e.currentTarget as HTMLElement).style.borderColor = '#2e2e2e' }}
+                    >
+                      <BookOpen size={14} style={{ opacity: selected ? 0.8 : 0.4, flexShrink: 0 }} />
+                      <span className="text-[13px]" style={{ opacity: selected ? 1 : 0.72 }}>{course.name}</span>
+                      {course.code && (
+                        <span className="ml-auto font-mono text-[11px] px-1.5 py-0.5 rounded" style={{ background: '#2a2a2a', opacity: 0.6 }}>
+                          {course.code}
+                        </span>
+                      )}
+                      {selected && <ChevronRight size={13} style={{ opacity: 0.5, marginLeft: course.code ? 0 : 'auto' }} />}
+                    </button>
+                  )
+                })}
+              </div>
             )}
+
+            {error && <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>{error}</p>}
 
             {courses.length > 0 && (
               <div className="flex items-center justify-end gap-3" style={{ borderTop: '1px solid #2e2e2e', paddingTop: 20 }}>

@@ -7,18 +7,18 @@ import AddItemPanel from './AddItemPanel'
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ semester?: string; add?: string }>
+  searchParams: Promise<{ semester?: string; add?: string; parent?: string }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
 
-  // ── Add item panel (Home-level type picker) ──────────────────────────────
+  // ── Add item panel (type picker for Home and standalone folders) ─────────
   if (params.add === 'item') {
     const { data: courses } = await supabase
       .from('courses')
       .select('id, name, code')
       .order('created_at', { ascending: true })
-    return <AddItemPanel courses={courses ?? []} />
+    return <AddItemPanel courses={courses ?? []} parentFolderId={params.parent ?? null} semester={params.semester ?? null} />
   }
 
   // ── Add course panel ────────────────────────────────────────────────────

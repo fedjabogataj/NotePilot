@@ -73,16 +73,35 @@ export async function deleteCourse(id: string) {
   revalidatePath('/dashboard')
 }
 
-export async function createFolder(courseId: string, parentFolderId: string | null, name: string) {
+export async function createFolder(
+  courseId: string | null,
+  parentFolderId: string | null,
+  name: string,
+  semester?: string | null,
+) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  // When courseId is null but a parent folder exists, inherit the parent's course_id
+  // so course-level sub-folders stay associated with their course.
+  let resolvedCourseId = courseId
+  if (resolvedCourseId === null && parentFolderId !== null) {
+    const { data: parent } = await supabase
+      .from('folders')
+      .select('course_id')
+      .eq('id', parentFolderId)
+      .eq('user_id', user.id)
+      .single()
+    resolvedCourseId = parent?.course_id ?? null
+  }
+
   const { error } = await supabase.from('folders').insert({
     user_id: user.id,
-    course_id: courseId,
+    course_id: resolvedCourseId,
     parent_folder_id: parentFolderId,
     name: name.trim(),
+    semester: semester ?? null,
   })
 
   if (error) throw new Error(error.message)
