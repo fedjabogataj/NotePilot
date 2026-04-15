@@ -72,3 +72,69 @@ export async function deleteCourse(id: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/dashboard')
 }
+
+export async function createFolder(courseId: string, parentFolderId: string | null, name: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await supabase.from('folders').insert({
+    user_id: user.id,
+    course_id: courseId,
+    parent_folder_id: parentFolderId,
+    name: name.trim(),
+  })
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/dashboard')
+}
+
+export async function renameFolder(id: string, name: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await supabase
+    .from('folders')
+    .update({ name: name.trim() })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/dashboard')
+}
+
+export async function deleteFolder(id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await supabase
+    .from('folders')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/dashboard')
+}
+
+export async function moveMaterialToFolder(
+  type: 'book' | 'slide' | 'exam',
+  materialId: string,
+  folderId: string | null,
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const table = type === 'book' ? 'books' : type === 'slide' ? 'lecture_slides' : 'exams'
+  const { error } = await supabase
+    .from(table)
+    .update({ folder_id: folderId })
+    .eq('id', materialId)
+    .eq('user_id', user.id)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/dashboard')
+}

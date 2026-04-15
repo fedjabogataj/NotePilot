@@ -11,12 +11,20 @@ export type SidebarCourse = {
   semester: string | null
 }
 
+export type SidebarFolder = {
+  id: string
+  name: string
+  course_id: string
+  parent_folder_id: string | null
+}
+
 export type SidebarMaterial = {
   id: string
   title: string
   type: 'book' | 'slide' | 'exam'
   status: string
   course_id: string
+  folder_id: string | null
 }
 
 export default async function DashboardLayout({
@@ -28,17 +36,18 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: courses }, { data: books }, { data: slides }, { data: exams }] = await Promise.all([
+  const [{ data: courses }, { data: books }, { data: slides }, { data: exams }, { data: foldersData }] = await Promise.all([
     supabase.from('courses').select('id, name, code, semester').eq('user_id', user.id).order('created_at', { ascending: true }),
-    supabase.from('books').select('id, title, processing_status, course_id').eq('user_id', user.id),
-    supabase.from('lecture_slides').select('id, title, processing_status, course_id').eq('user_id', user.id),
-    supabase.from('exams').select('id, title, processing_status, course_id').eq('user_id', user.id),
+    supabase.from('books').select('id, title, processing_status, course_id, folder_id').eq('user_id', user.id),
+    supabase.from('lecture_slides').select('id, title, processing_status, course_id, folder_id').eq('user_id', user.id),
+    supabase.from('exams').select('id, title, processing_status, course_id, folder_id').eq('user_id', user.id),
+    supabase.from('folders').select('id, name, course_id, parent_folder_id').eq('user_id', user.id).order('created_at', { ascending: true }),
   ])
 
   const materials: SidebarMaterial[] = [
-    ...(books ?? []).map(b => ({ id: b.id, title: b.title, type: 'book' as const, status: b.processing_status, course_id: b.course_id })),
-    ...(slides ?? []).map(s => ({ id: s.id, title: s.title, type: 'slide' as const, status: s.processing_status, course_id: s.course_id })),
-    ...(exams ?? []).map(e => ({ id: e.id, title: e.title, type: 'exam' as const, status: e.processing_status, course_id: e.course_id })),
+    ...(books ?? []).map(b => ({ id: b.id, title: b.title, type: 'book' as const, status: b.processing_status, course_id: b.course_id, folder_id: b.folder_id ?? null })),
+    ...(slides ?? []).map(s => ({ id: s.id, title: s.title, type: 'slide' as const, status: s.processing_status, course_id: s.course_id, folder_id: s.folder_id ?? null })),
+    ...(exams ?? []).map(e => ({ id: e.id, title: e.title, type: 'exam' as const, status: e.processing_status, course_id: e.course_id, folder_id: e.folder_id ?? null })),
   ]
 
   const firstName = (user.user_metadata?.first_name as string | undefined) ?? ''
@@ -53,7 +62,11 @@ export default async function DashboardLayout({
       <Topbar userEmail={user.email ?? ''} displayName={displayName} />
       <div className="flex flex-1 min-h-0">
         <Suspense fallback={<div style={{ width: 260, background: '#111111', borderRight: '1px solid #2e2e2e' }} />}>
-          <Sidebar courses={(courses ?? []) as SidebarCourse[]} materials={materials} />
+          <Sidebar
+            courses={(courses ?? []) as SidebarCourse[]}
+            materials={materials}
+            folders={(foldersData ?? []) as SidebarFolder[]}
+          />
         </Suspense>
         <main className="flex-1 overflow-hidden">
           {children}

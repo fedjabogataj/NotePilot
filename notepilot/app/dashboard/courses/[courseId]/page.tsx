@@ -8,10 +8,10 @@ export default async function CoursePage({
   searchParams,
 }: {
   params: Promise<{ courseId: string }>
-  searchParams: Promise<{ view?: string; add?: string }>
+  searchParams: Promise<{ view?: string; add?: string; parent?: string }>
 }) {
   const { courseId } = await params
-  const { view, add } = await searchParams
+  const { view, add, parent } = await searchParams
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -26,9 +26,15 @@ export default async function CoursePage({
 
   if (!course) notFound()
 
-  // Add material panel — no need for full course data
-  if (add === 'book' || add === 'slide' || add === 'exam') {
-    return <AddMaterialPanel courseId={courseId} initialType={add} />
+  // Add panel — handles all add types including folder
+  if (add === 'book' || add === 'slide' || add === 'exam' || add === 'folder') {
+    return (
+      <AddMaterialPanel
+        courseId={courseId}
+        initialType={add}
+        parentFolderId={parent ?? null}
+      />
+    )
   }
 
   const [{ data: books }, { data: slides }, { data: exams }] = await Promise.all([

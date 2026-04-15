@@ -6,10 +6,10 @@ import Link from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import {
   Folder, FolderOpen, BookOpen, Book, Presentation,
-  ClipboardList, PanelLeftClose, PanelLeftOpen, ChevronRight, MoreHorizontal,
+  ClipboardList, PanelLeftClose, PanelLeftOpen, ChevronRight, MoreHorizontal, X, Plus, Home,
 } from 'lucide-react'
-import type { SidebarCourse, SidebarMaterial } from './layout'
-import { deleteCourse } from './actions'
+import type { SidebarCourse, SidebarMaterial, SidebarFolder } from './layout'
+import { deleteCourse, createFolder, renameFolder, deleteFolder, moveMaterialToFolder } from './actions'
 import { deleteBook, deleteLectureSlide, deleteExam } from './courses/[courseId]/actions'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ function ContextMenu({
   const style: React.CSSProperties = {
     position: 'fixed',
     top: anchor.y + 4,
-    left: anchor.x - 192,  // right-align to ~200px wide menu
+    left: anchor.x - 192,
     width: 200,
     background: '#222222',
     border: '1px solid #333333',
@@ -108,11 +108,128 @@ function MoreBtn({ onOpen }: { onOpen: (anchor: { x: number; y: number }) => voi
   )
 }
 
+// ── Plus button ────────────────────────────────────────────────────────────
+
+function PlusBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={e => {
+        e.preventDefault()
+        e.stopPropagation()
+        onClick()
+      }}
+      className="flex items-center justify-center rounded opacity-0 group-hover:opacity-100 shrink-0 transition-all"
+      style={{ width: 20, height: 20, color: '#e8e8e8' }}
+      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#333333')}
+      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+      title="Add item"
+    >
+      <Plus size={13} style={{ opacity: 0.6 }} />
+    </button>
+  )
+}
+
 // ── Status dot ─────────────────────────────────────────────────────────────
 
 function StatusDot({ status }: { status: string }) {
   if (status === 'ready') return null
   return <span className="inline-block rounded-full shrink-0" style={{ width: 5, height: 5, background: status === 'failed' ? '#f04438' : '#e9a84c' }} />
+}
+
+// ── Move-to-folder picker ──────────────────────────────────────────────────
+
+function MovePicker({
+  material,
+  folders,
+  onMove,
+  onClose,
+}: {
+  material: SidebarMaterial
+  folders: SidebarFolder[]
+  onMove: (folderId: string | null) => void
+  onClose: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', onKey) }
+  }, [onClose])
+
+  // Build BFS-ordered list of folders for this course
+  const courseFolders = folders.filter(f => f.course_id === material.course_id)
+  const ordered: Array<{ folder: SidebarFolder; depth: number }> = []
+  const build = (parentId: string | null, depth: number) => {
+    for (const f of courseFolders.filter(f => f.parent_folder_id === parentId)) {
+      ordered.push({ folder: f, depth })
+      build(f.id, depth + 1)
+    }
+  }
+  build(null, 0)
+
+  return createPortal(
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 10000,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.55)',
+    }}>
+      <div ref={ref} style={{
+        background: '#1e1e1e', border: '1px solid #333333',
+        borderRadius: 10, width: 280, padding: '12px 0',
+        boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px 10px' }}>
+          <span style={{ color: '#e8e8e8', fontSize: 13, fontWeight: 600 }}>Move to folder</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', display: 'flex', alignItems: 'center', padding: 2 }}>
+            <X size={14} />
+          </button>
+        </div>
+        <div style={{ height: 1, background: '#2e2e2e', marginBottom: 4 }} />
+
+        <button
+          onClick={() => onMove(null)}
+          className="flex items-center gap-2 w-full text-left"
+          style={{
+            padding: '5px 12px', color: '#e8e8e8', fontSize: 12,
+            background: material.folder_id === null ? '#252525' : 'transparent',
+          }}
+          onMouseEnter={e => { if (material.folder_id !== null) (e.currentTarget as HTMLElement).style.background = '#2a2a2a' }}
+          onMouseLeave={e => { if (material.folder_id !== null) (e.currentTarget as HTMLElement).style.background = material.folder_id === null ? '#252525' : 'transparent' }}
+        >
+          <Folder size={13} style={{ opacity: 0.45, flexShrink: 0 }} />
+          <span style={{ opacity: 0.65 }}>Course root</span>
+        </button>
+
+        {ordered.map(({ folder, depth }) => (
+          <button
+            key={folder.id}
+            onClick={() => onMove(folder.id)}
+            className="flex items-center gap-2 w-full text-left"
+            style={{
+              paddingLeft: 12 + depth * 12, paddingRight: 12, paddingTop: 5, paddingBottom: 5,
+              color: '#e8e8e8', fontSize: 12,
+              background: material.folder_id === folder.id ? '#252525' : 'transparent',
+            }}
+            onMouseEnter={e => { if (material.folder_id !== folder.id) (e.currentTarget as HTMLElement).style.background = '#2a2a2a' }}
+            onMouseLeave={e => { if (material.folder_id !== folder.id) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+          >
+            <Folder size={13} style={{ opacity: 0.45, flexShrink: 0 }} />
+            <span>{folder.name}</span>
+          </button>
+        ))}
+
+        {ordered.length === 0 && (
+          <p style={{ padding: '4px 12px', color: '#e8e8e8', opacity: 0.3, fontSize: 11 }}>No folders in this course yet</p>
+        )}
+      </div>
+    </div>,
+    document.body
+  )
 }
 
 // ── Main sidebar ───────────────────────────────────────────────────────────
@@ -123,15 +240,28 @@ const TypeIcon = {
   exam:  <ClipboardList size={14} style={{ flexShrink: 0 }} />,
 }
 
-export default function Sidebar({ courses, materials }: { courses: SidebarCourse[]; materials: SidebarMaterial[] }) {
+// Indent constants
+const FOLDER_BASE = 28   // folders at course root depth
+const INDENT_STEP = 12   // per nesting level
+
+export default function Sidebar({
+  courses,
+  materials,
+  folders,
+}: {
+  courses: SidebarCourse[]
+  materials: SidebarMaterial[]
+  folders: SidebarFolder[]
+}) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const activeView = searchParams.get('view')
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
 
-  // Active menu state
   const [menu, setMenu] = useState<{ items: MenuItem[]; anchor: { x: number; y: number } } | null>(null)
+  const [openFolders, setOpenFolders] = useState<Set<string>>(() => new Set())
+  const [movePicker, setMovePicker] = useState<{ mat: SidebarMaterial } | null>(null)
 
   // Group courses by semester
   const semesterMap = new Map<string, SidebarCourse[]>()
@@ -146,7 +276,7 @@ export default function Sidebar({ courses, materials }: { courses: SidebarCourse
     return b.localeCompare(a)
   })
 
-  // Expand state
+  const [homeOpen, setHomeOpen] = useState(true)
   const [openSemesters, setOpenSemesters] = useState<Set<string>>(() => new Set(semesters))
   const [openCourses, setOpenCourses] = useState<Set<string>>(() => {
     const match = pathname.match(/\/courses\/([^/?]+)/)
@@ -159,8 +289,12 @@ export default function Sidebar({ courses, materials }: { courses: SidebarCourse
   function toggleCourse(id: string) {
     setOpenCourses(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   }
+  function toggleFolder(id: string) {
+    setOpenFolders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
 
-  // Delete helpers
+  // ── Delete helpers ────────────────────────────────────────────────────────
+
   async function doDeleteCourse(id: string, name: string) {
     if (!confirm(`Delete course "${name}" and all its materials? This cannot be undone.`)) return
     try {
@@ -179,6 +313,127 @@ export default function Sidebar({ courses, materials }: { courses: SidebarCourse
       router.refresh()
     } catch (err) { alert(err instanceof Error ? err.message : 'Delete failed') }
   }
+
+  // ── Folder helpers ────────────────────────────────────────────────────────
+
+  async function doCreateFolder(courseId: string, parentFolderId: string | null) {
+    const label = parentFolderId ? 'Subfolder name:' : 'Folder name:'
+    const name = window.prompt(label)
+    if (!name?.trim()) return
+    try { await createFolder(courseId, parentFolderId, name); router.refresh() }
+    catch (err) { alert(err instanceof Error ? err.message : 'Failed to create folder') }
+  }
+
+  async function doRenameFolder(id: string, currentName: string) {
+    const name = window.prompt('Rename folder:', currentName)
+    if (!name?.trim() || name.trim() === currentName) return
+    try { await renameFolder(id, name); router.refresh() }
+    catch (err) { alert(err instanceof Error ? err.message : 'Failed to rename folder') }
+  }
+
+  async function doDeleteFolder(id: string, name: string) {
+    if (!confirm(`Delete folder "${name}" and all its subfolders? Materials inside will be moved to course root.`)) return
+    try { await deleteFolder(id); router.refresh() }
+    catch (err) { alert(err instanceof Error ? err.message : 'Failed to delete folder') }
+  }
+
+  async function doMoveMaterial(mat: SidebarMaterial, folderId: string | null) {
+    setMovePicker(null)
+    try { await moveMaterialToFolder(mat.type, mat.id, folderId); router.refresh() }
+    catch (err) { alert(err instanceof Error ? err.message : 'Failed to move file') }
+  }
+
+  // ── Recursive folder/file renderer ────────────────────────────────────────
+  // depth=0 is course root; each nested folder increments depth
+
+  function renderLevel(courseId: string, parentFolderId: string | null, depth: number): React.ReactNode {
+    const folderIndent = FOLDER_BASE + depth * INDENT_STEP
+    const fileIndent = folderIndent + 12  // files indent past the folder chevron area
+
+    const myFolders = folders.filter(f => f.course_id === courseId && f.parent_folder_id === parentFolderId)
+    const myMaterials = materials.filter(m => m.course_id === courseId && m.folder_id === parentFolderId)
+
+    if (depth === 0 && myFolders.length === 0 && myMaterials.length === 0) {
+      return (
+        <p className="text-[11px]" style={{ paddingLeft: fileIndent, color: '#e8e8e8', opacity: 0.22, lineHeight: '24px' }}>
+          No files yet
+        </p>
+      )
+    }
+
+    return (
+      <>
+        {myFolders.map(folder => {
+          const isFolderOpen = openFolders.has(folder.id)
+          const folderMenuItems: MenuItem[] = [
+            { kind: 'item', icon: '📁', label: 'New Subfolder', action: () => doCreateFolder(courseId, folder.id) },
+            { kind: 'separator' },
+            { kind: 'item', icon: '✏️', label: 'Rename', action: () => doRenameFolder(folder.id, folder.name) },
+            { kind: 'item', icon: '🗑', label: 'Delete Folder', danger: true, action: () => doDeleteFolder(folder.id, folder.name) },
+          ]
+
+          return (
+            <div key={folder.id}>
+              <div
+                className="group flex items-center mx-1 rounded-[4px] transition-all"
+                style={{ height: 28, paddingLeft: folderIndent }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1e1e1e' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                <button onClick={() => toggleFolder(folder.id)} className="shrink-0 p-0.5 mr-0.5" style={{ color: '#e8e8e8' }}>
+                  <ChevronRight size={11} style={{ opacity: 0.35, transform: isFolderOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
+                </button>
+                <span className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
+                  {isFolderOpen
+                    ? <FolderOpen size={14} style={{ opacity: 0.65, flexShrink: 0, color: '#6b9fd4' }} />
+                    : <Folder    size={14} style={{ opacity: 0.65, flexShrink: 0, color: '#6b9fd4' }} />
+                  }
+                  <span className="text-[13px] truncate" style={{ opacity: 0.72 }}>{folder.name}</span>
+                </span>
+                <PlusBtn onClick={() => router.push(`/dashboard/courses/${courseId}?add=folder&parent=${folder.id}`)} />
+                <MoreBtn onOpen={anchor => setMenu({ items: folderMenuItems, anchor })} />
+              </div>
+              {isFolderOpen && renderLevel(courseId, folder.id, depth + 1)}
+            </div>
+          )
+        })}
+
+        {myMaterials.map(mat => {
+          const fileKey = `${mat.type}:${mat.id}`
+          const fileHref = `/dashboard/courses/${courseId}?view=${fileKey}`
+          const fileActive = activeView === fileKey && pathname.startsWith(`/dashboard/courses/${courseId}`)
+
+          const fileMenuItems: MenuItem[] = [
+            { kind: 'item', icon: '↗', label: 'Open File', action: () => router.push(fileHref) },
+            { kind: 'separator' },
+            { kind: 'item', icon: '📁', label: 'Move to folder…', action: () => setMovePicker({ mat }) },
+            { kind: 'separator' },
+            { kind: 'item', icon: '✏️', label: 'Rename', disabled: true, action: () => {} },
+            { kind: 'item', icon: '🗑', label: 'Delete', danger: true, action: () => doDeleteMaterial(mat) },
+          ]
+
+          return (
+            <div
+              key={mat.id}
+              className="group flex items-center mx-1 rounded-[4px] transition-all"
+              style={{ height: 28, paddingLeft: fileIndent, background: fileActive ? '#252525' : 'transparent' }}
+              onMouseEnter={e => { if (!fileActive) (e.currentTarget as HTMLElement).style.background = '#1e1e1e' }}
+              onMouseLeave={e => { if (!fileActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+            >
+              <Link href={fileHref} className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
+                <span style={{ opacity: fileActive ? 0.8 : 0.45 }}>{TypeIcon[mat.type]}</span>
+                <span className="text-[13px] truncate" style={{ opacity: fileActive ? 1 : 0.65 }}>{mat.title}</span>
+                <StatusDot status={mat.status} />
+              </Link>
+              <MoreBtn onOpen={anchor => setMenu({ items: fileMenuItems, anchor })} />
+            </div>
+          )
+        })}
+      </>
+    )
+  }
+
+  // ── Collapsed sidebar ──────────────────────────────────────────────────────
 
   if (collapsed) {
     return (
@@ -200,9 +455,30 @@ export default function Sidebar({ courses, materials }: { courses: SidebarCourse
     <>
       <aside className="flex flex-col shrink-0" style={{ width: 260, background: '#111111', borderRight: '1px solid #2e2e2e' }}>
         <div className="flex-1 overflow-y-auto py-2">
-          {courses.length === 0 && (
-            <p className="px-4 pt-2 text-[12px]" style={{ color: '#e8e8e8', opacity: 0.28 }}>No courses yet</p>
-          )}
+          {/* Home root row */}
+          <div
+            className="group flex items-center mx-1 px-2 rounded-[4px] transition-all mb-0.5"
+            style={{ height: 28 }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1a1a1a' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+          >
+            <button onClick={() => setHomeOpen(prev => !prev)} className="shrink-0 p-0.5 mr-0.5" style={{ color: '#e8e8e8' }}>
+              <ChevronRight size={11} style={{ opacity: 0.4, transform: homeOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
+            </button>
+            <Link href="/dashboard" className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
+              <Home size={14} style={{ opacity: 0.6, flexShrink: 0 }} />
+              <span className="text-[12px] font-semibold truncate uppercase tracking-wider" style={{ opacity: 0.65, letterSpacing: '0.06em' }}>
+                Home
+              </span>
+            </Link>
+            <PlusBtn onClick={() => router.push('/dashboard?add=item')} />
+          </div>
+
+          {homeOpen && (
+            <div style={{ paddingLeft: 12 }}>
+              {courses.length === 0 && (
+                <p className="px-4 pt-1 text-[12px]" style={{ color: '#e8e8e8', opacity: 0.28 }}>No courses yet</p>
+              )}
 
           {semesters.map(semester => {
             const semCourses = semesterMap.get(semester)!
@@ -244,7 +520,6 @@ export default function Sidebar({ courses, materials }: { courses: SidebarCourse
                   const courseHref = `/dashboard/courses/${course.id}`
                   const courseActive = pathname.startsWith(`/dashboard/courses/${course.id}`) && !activeView && !searchParams.get('add')
                   const courseOpen = openCourses.has(course.id)
-                  const courseMaterials = materials.filter(m => m.course_id === course.id)
 
                   const courseMenuItems: MenuItem[] = [
                     { kind: 'item', icon: 'ℹ️', label: 'Course Info', action: () => router.push(courseHref) },
@@ -252,6 +527,8 @@ export default function Sidebar({ courses, materials }: { courses: SidebarCourse
                     { kind: 'item', icon: '📕', label: 'Add Book',       action: () => router.push(`${courseHref}?add=book`) },
                     { kind: 'item', icon: '📊', label: 'Add Slide Deck', action: () => router.push(`${courseHref}?add=slide`) },
                     { kind: 'item', icon: '📋', label: 'Add Exam Paper', action: () => router.push(`${courseHref}?add=exam`) },
+                    { kind: 'separator' },
+                    { kind: 'item', icon: '📁', label: 'New Folder', action: () => doCreateFolder(course.id, null) },
                     { kind: 'separator' },
                     { kind: 'item', icon: '✏️', label: 'Rename', disabled: true, action: () => {} },
                     { kind: 'item', icon: '🗑', label: 'Delete Course', danger: true, action: () => doDeleteCourse(course.id, course.name) },
@@ -271,46 +548,20 @@ export default function Sidebar({ courses, materials }: { courses: SidebarCourse
                           <BookOpen size={14} style={{ opacity: courseActive ? 0.8 : 0.5, flexShrink: 0 }} />
                           <span className="text-[13px] truncate" style={{ opacity: courseActive ? 1 : 0.72 }}>{course.name}</span>
                         </Link>
+                        <PlusBtn onClick={() => router.push(`${courseHref}?add=book`)} />
                         <MoreBtn onOpen={anchor => setMenu({ items: courseMenuItems, anchor })} />
                       </div>
 
-                      {/* Files */}
-                      {courseOpen && courseMaterials.map(mat => {
-                        const fileKey = `${mat.type}:${mat.id}`
-                        const fileHref = `/dashboard/courses/${course.id}?view=${fileKey}`
-                        const fileActive = activeView === fileKey && pathname.startsWith(`/dashboard/courses/${course.id}`)
-
-                        const fileMenuItems: MenuItem[] = [
-                          { kind: 'item', icon: '↗', label: 'Open File', action: () => router.push(fileHref) },
-                          { kind: 'separator' },
-                          { kind: 'item', icon: '✏️', label: 'Rename', disabled: true, action: () => {} },
-                          { kind: 'item', icon: '🗑', label: 'Delete', danger: true, action: () => doDeleteMaterial(mat) },
-                        ]
-
-                        return (
-                          <div key={mat.id} className="group flex items-center mx-1 px-2 rounded-[4px] transition-all" style={{ height: 28, paddingLeft: 36, background: fileActive ? '#252525' : 'transparent' }}
-                            onMouseEnter={e => { if (!fileActive) (e.currentTarget as HTMLElement).style.background = '#1e1e1e' }}
-                            onMouseLeave={e => { if (!fileActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                          >
-                            <Link href={fileHref} className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
-                              <span style={{ opacity: fileActive ? 0.8 : 0.45 }}>{TypeIcon[mat.type]}</span>
-                              <span className="text-[13px] truncate" style={{ opacity: fileActive ? 1 : 0.65 }}>{mat.title}</span>
-                              <StatusDot status={mat.status} />
-                            </Link>
-                            <MoreBtn onOpen={anchor => setMenu({ items: fileMenuItems, anchor })} />
-                          </div>
-                        )
-                      })}
-
-                      {courseOpen && courseMaterials.length === 0 && (
-                        <p className="text-[11px]" style={{ paddingLeft: 48, color: '#e8e8e8', opacity: 0.22, lineHeight: '24px' }}>No files yet</p>
-                      )}
+                      {/* Course contents (folders + files, recursive) */}
+                      {courseOpen && renderLevel(course.id, null, 0)}
                     </div>
                   )
                 })}
               </div>
             )
           })}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -338,6 +589,16 @@ export default function Sidebar({ courses, materials }: { courses: SidebarCourse
 
       {/* Context menu portal */}
       {menu && <ContextMenu items={menu.items} anchor={menu.anchor} onClose={() => setMenu(null)} />}
+
+      {/* Move-to-folder picker */}
+      {movePicker && (
+        <MovePicker
+          material={movePicker.mat}
+          folders={folders}
+          onMove={folderId => doMoveMaterial(movePicker.mat, folderId)}
+          onClose={() => setMovePicker(null)}
+        />
+      )}
     </>
   )
 }

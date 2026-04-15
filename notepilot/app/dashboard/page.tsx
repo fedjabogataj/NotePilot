@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import CoursesClient from './CoursesClient'
 import SemesterPanel from './SemesterPanel'
 import AddCoursePanel from './AddCoursePanel'
+import AddItemPanel from './AddItemPanel'
 
 export default async function DashboardPage({
   searchParams,
@@ -10,6 +11,15 @@ export default async function DashboardPage({
 }) {
   const params = await searchParams
   const supabase = await createClient()
+
+  // ── Add item panel (Home-level type picker) ──────────────────────────────
+  if (params.add === 'item') {
+    const { data: courses } = await supabase
+      .from('courses')
+      .select('id, name, code')
+      .order('created_at', { ascending: true })
+    return <AddItemPanel courses={courses ?? []} />
+  }
 
   // ── Add course panel ────────────────────────────────────────────────────
   if (params.add === 'course') {
