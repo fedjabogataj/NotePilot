@@ -1,8 +1,8 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import Topbar from './Topbar'
 import Sidebar from './Sidebar'
+import Breadcrumb from './Breadcrumb'
 
 export type SidebarCourse = {
   id: string
@@ -55,24 +55,25 @@ export default async function DashboardLayout({
   const lastName = (user.user_metadata?.last_name as string | undefined) ?? ''
   const displayName = [firstName, lastName].filter(Boolean).join(' ')
 
+  const courseList = (courses ?? []) as SidebarCourse[]
+
   return (
-    <div
-      className="flex flex-col"
-      style={{ height: '100dvh', background: '#1a1a1a', overflow: 'hidden' }}
-    >
-      <Topbar userEmail={user.email ?? ''} displayName={displayName} />
-      <div className="flex flex-1 min-h-0">
-        <Suspense fallback={<div style={{ width: 260, background: '#111111', borderRight: '1px solid #2e2e2e' }} />}>
-          <Sidebar
-            courses={(courses ?? []) as SidebarCourse[]}
-            materials={materials}
-            folders={(foldersData ?? []) as SidebarFolder[]}
-          />
-        </Suspense>
-        <main className="flex-1 overflow-hidden">
+    <div className="flex" style={{ height: '100dvh', background: '#1a1a1a', overflow: 'hidden' }}>
+      <Suspense fallback={<div style={{ width: 240, background: '#111111', borderRight: '1px solid #2e2e2e' }} />}>
+        <Sidebar
+          courses={courseList}
+          materials={materials}
+          folders={(foldersData ?? []) as SidebarFolder[]}
+          userEmail={user.email ?? ''}
+          displayName={displayName}
+        />
+      </Suspense>
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <Breadcrumb courses={courseList} />
+        <div className="flex-1 overflow-hidden">
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

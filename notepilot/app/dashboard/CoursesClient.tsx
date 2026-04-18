@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { BookOpen } from 'lucide-react'
 import { createCourse, deleteCourse, updateCourse } from './actions'
 
 type Course = {
@@ -13,8 +14,6 @@ type Course = {
   description: string | null
 }
 
-const inputCls =
-  'w-full rounded-lg px-3 py-2 text-[14px] outline-none transition-all'
 const inputStyle = {
   background: '#1a1a1a',
   border: '1px solid #2e2e2e',
@@ -25,7 +24,7 @@ function DarkInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={inputCls}
+      className="w-full rounded-lg px-3 py-2 text-[14px] outline-none transition-all"
       style={inputStyle}
       onFocus={e => {
         e.currentTarget.style.borderColor = '#444444'
@@ -140,11 +139,11 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
   return (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-[32px] font-bold" style={{ color: '#e8e8e8' }}>My Courses</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-[28px] font-bold" style={{ color: '#e8e8e8' }}>My Courses</h1>
         <button
           onClick={openDialog}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors"
           style={{ background: '#333333', color: '#e8e8e8' }}
           onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#3d3d3d')}
           onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = '#333333')}
@@ -160,41 +159,63 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
           <p className="text-[13px]">Create your first course to get started.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col">
           {courses.map(course => (
             <div
               key={course.id}
-              className="group relative rounded-xl p-5 transition-all"
-              style={{ background: '#222222', border: '1px solid #2e2e2e' }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = '#3a3a3a')}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = '#2e2e2e')}
+              className="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all"
+              style={{ color: '#e8e8e8' }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#1e1e1e')}
+              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
             >
-              {/* Invisible link — hidden during inline edit */}
               {editingId !== course.id && (
                 <Link
                   href={`/dashboard/courses/${course.id}`}
-                  className="absolute inset-0 z-0 rounded-xl"
+                  className="absolute inset-0 z-0 rounded-lg"
                   aria-label={course.name}
                 />
               )}
 
+              <BookOpen size={16} style={{ opacity: 0.4, flexShrink: 0 }} />
+
+              <div className="flex-1 min-w-0">
+                {editingId === course.id ? (
+                  <input
+                    autoFocus
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onBlur={() => saveEdit(course)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveEdit(course)
+                      if (e.key === 'Escape') setEditingId(null)
+                    }}
+                    className="w-full text-[14px] bg-transparent outline-none"
+                    style={{ color: '#e8e8e8', borderBottom: '1px solid #e9a84c' }}
+                  />
+                ) : (
+                  <span className="text-[14px] truncate block" style={{ opacity: 0.85 }}>
+                    {course.name}
+                  </span>
+                )}
+              </div>
+
+              {course.code && (
+                <span className="font-mono text-[11px] shrink-0" style={{ opacity: 0.35 }}>
+                  {course.code}
+                </span>
+              )}
+
               {/* Actions */}
-              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 shrink-0">
                 <button
                   onClick={() => startEdit(course)}
                   title="Rename"
-                  className="p-1.5 rounded transition-colors"
+                  className="p-1 rounded transition-colors"
                   style={{ color: '#e8e8e8', opacity: 0.4 }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = '#2a2a2a'
-                    ;(e.currentTarget as HTMLElement).style.opacity = '0.9'
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'transparent'
-                    ;(e.currentTarget as HTMLElement).style.opacity = '0.4'
-                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#2a2a2a'; (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.opacity = '0.4' }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                   </svg>
@@ -202,20 +223,12 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
                 <button
                   onClick={() => handleDelete(course.id, course.name)}
                   title="Delete"
-                  className="p-1.5 rounded transition-colors"
+                  className="p-1 rounded transition-colors"
                   style={{ color: '#e8e8e8', opacity: 0.4 }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(240,68,56,0.15)'
-                    ;(e.currentTarget as HTMLElement).style.color = '#f04438'
-                    ;(e.currentTarget as HTMLElement).style.opacity = '1'
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = 'transparent'
-                    ;(e.currentTarget as HTMLElement).style.color = '#e8e8e8'
-                    ;(e.currentTarget as HTMLElement).style.opacity = '0.4'
-                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(240,68,56,0.15)'; (e.currentTarget as HTMLElement).style.color = '#f04438'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#e8e8e8'; (e.currentTarget as HTMLElement).style.opacity = '0.4' }}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6"/>
                     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                     <path d="M10 11v6M14 11v6"/>
@@ -223,48 +236,6 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
                   </svg>
                 </button>
               </div>
-
-              {/* Name — editable inline */}
-              {editingId === course.id ? (
-                <input
-                  autoFocus
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  onBlur={() => saveEdit(course)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') saveEdit(course)
-                    if (e.key === 'Escape') setEditingId(null)
-                  }}
-                  className="w-full text-[15px] font-semibold bg-transparent outline-none mb-1 pr-14"
-                  style={{ color: '#e8e8e8', borderBottom: '1px solid #e9a84c' }}
-                />
-              ) : (
-                <h2 className="text-[15px] font-semibold mb-1 truncate pr-14" style={{ color: '#e8e8e8' }}>
-                  {course.name}
-                </h2>
-              )}
-
-              <div className="flex items-center gap-2 mb-2.5">
-                {course.code && (
-                  <span
-                    className="font-mono text-[12px] px-1.5 py-0.5 rounded"
-                    style={{ background: '#2a2a2a', color: '#e8e8e8', opacity: 0.7 }}
-                  >
-                    {course.code}
-                  </span>
-                )}
-                {course.semester && (
-                  <span className="text-[12px]" style={{ color: '#e8e8e8', opacity: 0.5 }}>
-                    {course.semester}
-                  </span>
-                )}
-              </div>
-
-              {course.description && (
-                <p className="text-[13px] line-clamp-2" style={{ color: '#e8e8e8', opacity: 0.5 }}>
-                  {course.description}
-                </p>
-              )}
             </div>
           ))}
         </div>
@@ -316,14 +287,8 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
               onClick={closeDialog}
               className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors"
               style={{ color: '#e8e8e8', opacity: 0.7 }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = '#2a2a2a'
-                ;(e.currentTarget as HTMLElement).style.opacity = '1'
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = 'transparent'
-                ;(e.currentTarget as HTMLElement).style.opacity = '0.7'
-              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#2a2a2a'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
             >
               Cancel
             </button>

@@ -68,32 +68,10 @@ export default function CourseClient({
               {courseCode && <span className="font-mono">{courseCode}</span>}
             </div>
             {courseDescription && (
-              <p className="mb-8" style={{ fontSize: 15, color: '#e8e8e8', opacity: 0.55, lineHeight: 1.7 }}>{courseDescription}</p>
+              <p className="mb-6" style={{ fontSize: 15, color: '#e8e8e8', opacity: 0.55, lineHeight: 1.7 }}>{courseDescription}</p>
             )}
 
-            {/* Material summary tiles */}
-            <div className="grid grid-cols-3 gap-3 mb-8">
-              {[
-                { label: 'Books',  count: initialBooks.length,  icon: <Book size={18} />,         add: 'book'  },
-                { label: 'Slides', count: initialSlides.length, icon: <Presentation size={18} />,  add: 'slide' },
-                { label: 'Exams',  count: initialExams.length,  icon: <ClipboardList size={18} />, add: 'exam'  },
-              ].map(({ label, count, icon, add }) => (
-                <button
-                  key={label}
-                  onClick={() => router.push(`/dashboard/courses/${courseId}?add=${add}`)}
-                  className="flex flex-col items-start p-4 rounded-xl text-left transition-all"
-                  style={{ background: '#222222', border: '1px solid #2e2e2e', color: '#e8e8e8' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#3a3a3a'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#2e2e2e'}
-                >
-                  <span style={{ opacity: 0.4, marginBottom: 8 }}>{icon}</span>
-                  <span className="text-[24px] font-bold">{count}</span>
-                  <span className="text-[12px]" style={{ opacity: 0.45 }}>{label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Structure overview */}
+            {/* Files */}
             {(initialBooks.length + initialSlides.length + initialExams.length) > 0 && (
               <div>
                 <p className="text-[12px] uppercase tracking-widest mb-3" style={{ color: '#e8e8e8', opacity: 0.3, letterSpacing: '0.08em' }}>

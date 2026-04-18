@@ -7,10 +7,12 @@ import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import {
   Folder, FolderOpen, BookOpen, Book, Presentation,
   ClipboardList, PanelLeftClose, PanelLeftOpen, ChevronRight, MoreHorizontal, X, Plus, Home,
+  BookMarked, LogOut,
 } from 'lucide-react'
 import type { SidebarCourse, SidebarMaterial, SidebarFolder } from './layout'
 import { deleteCourse, createFolder, renameFolder, deleteFolder, moveMaterialToFolder } from './actions'
 import { deleteBook, deleteLectureSlide, deleteExam } from './courses/[courseId]/actions'
+import { createClient } from '@/lib/supabase/client'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -161,7 +163,6 @@ function MovePicker({
     return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', onKey) }
   }, [onClose])
 
-  // Build BFS-ordered list of folders for this course
   const courseFolders = folders.filter(f => f.course_id === material.course_id)
   const ordered: Array<{ folder: SidebarFolder; depth: number }> = []
   const build = (parentId: string | null, depth: number) => {
@@ -235,23 +236,26 @@ function MovePicker({
 // ── Main sidebar ───────────────────────────────────────────────────────────
 
 const TypeIcon = {
-  book:  <Book size={14} style={{ flexShrink: 0 }} />,
-  slide: <Presentation size={14} style={{ flexShrink: 0 }} />,
-  exam:  <ClipboardList size={14} style={{ flexShrink: 0 }} />,
+  book:  <Book size={13} style={{ flexShrink: 0 }} />,
+  slide: <Presentation size={13} style={{ flexShrink: 0 }} />,
+  exam:  <ClipboardList size={13} style={{ flexShrink: 0 }} />,
 }
 
-// Indent constants
-const FOLDER_BASE = 28   // folders at course root depth
-const INDENT_STEP = 12   // per nesting level
+const FOLDER_BASE = 28
+const INDENT_STEP = 12
 
 export default function Sidebar({
   courses,
   materials,
   folders,
+  userEmail,
+  displayName,
 }: {
   courses: SidebarCourse[]
   materials: SidebarMaterial[]
   folders: SidebarFolder[]
+  userEmail: string
+  displayName: string
 }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -262,6 +266,16 @@ export default function Sidebar({
   const [menu, setMenu] = useState<{ items: MenuItem[]; anchor: { x: number; y: number } } | null>(null)
   const [openFolders, setOpenFolders] = useState<Set<string>>(() => new Set())
   const [movePicker, setMovePicker] = useState<{ mat: SidebarMaterial } | null>(null)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false)
+    }
+    if (userMenuOpen) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [userMenuOpen])
 
   // Group courses by semester
   const semesterMap = new Map<string, SidebarCourse[]>()
@@ -343,22 +357,28 @@ export default function Sidebar({
     catch (err) { alert(err instanceof Error ? err.message : 'Failed to move file') }
   }
 
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
+
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || (userEmail[0] ?? '?').toUpperCase()
+
   // ── Non-course folder renderer ─────────────────────────────────────────────
-  // Renders folders that are not tied to a course (course_id = null).
-  //
-  // At the root level (parentFolderId = null):
-  //   - semesterFilter = undefined  → home-level folders (semester = null)
-  //   - semesterFilter = string     → semester-level folders (semester = that string)
-  // For nested levels (parentFolderId set) the semester filter is ignored;
-  // sub-folders are matched purely by parent_folder_id.
 
   function renderHomeLevel(parentFolderId: string | null, depth: number, semesterFilter?: string | null): React.ReactNode {
     const indent = 20 + depth * INDENT_STEP
 
     const myFolders = parentFolderId !== null
-      // sub-folders: match by parent only
       ? folders.filter(f => f.course_id === null && f.parent_folder_id === parentFolderId)
-      // root level: additionally filter by semester
       : semesterFilter !== undefined
         ? folders.filter(f => f.course_id === null && f.parent_folder_id === null && f.semester === semesterFilter)
         : folders.filter(f => f.course_id === null && f.parent_folder_id === null && f.semester === null)
@@ -376,19 +396,19 @@ export default function Sidebar({
             <div key={folder.id}>
               <div
                 className="group flex items-center mx-1 rounded-[4px] transition-all"
-                style={{ height: 28, paddingLeft: indent }}
+                style={{ height: 26, paddingLeft: indent }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1e1e1e' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
                 <button onClick={() => toggleFolder(folder.id)} className="shrink-0 p-0.5 mr-0.5" style={{ color: '#e8e8e8' }}>
-                  <ChevronRight size={11} style={{ opacity: 0.35, transform: isFolderOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
+                  <ChevronRight size={10} style={{ opacity: 0.35, transform: isFolderOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
                 </button>
                 <span className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
                   {isFolderOpen
-                    ? <FolderOpen size={14} style={{ opacity: 0.65, flexShrink: 0, color: '#6b9fd4' }} />
-                    : <Folder    size={14} style={{ opacity: 0.65, flexShrink: 0, color: '#6b9fd4' }} />
+                    ? <FolderOpen size={13} style={{ opacity: 0.55, flexShrink: 0, color: '#6b9fd4' }} />
+                    : <Folder    size={13} style={{ opacity: 0.55, flexShrink: 0, color: '#6b9fd4' }} />
                   }
-                  <span className="text-[13px] truncate" style={{ opacity: 0.72 }}>{folder.name}</span>
+                  <span className="text-[13px] truncate" style={{ opacity: 0.65 }}>{folder.name}</span>
                 </span>
                 <PlusBtn onClick={() => router.push(`/dashboard?add=item&parent=${folder.id}`)} />
                 <MoreBtn onOpen={anchor => setMenu({ items: folderMenuItems, anchor })} />
@@ -402,11 +422,10 @@ export default function Sidebar({
   }
 
   // ── Recursive folder/file renderer ────────────────────────────────────────
-  // depth=0 is course root; each nested folder increments depth
 
   function renderLevel(courseId: string, parentFolderId: string | null, depth: number): React.ReactNode {
     const folderIndent = FOLDER_BASE + depth * INDENT_STEP
-    const fileIndent = folderIndent + 12  // files indent past the folder chevron area
+    const fileIndent = folderIndent + 12
 
     const myFolders = folders.filter(f => f.course_id === courseId && f.parent_folder_id === parentFolderId)
     const myMaterials = materials.filter(m => m.course_id === courseId && m.folder_id === parentFolderId)
@@ -431,19 +450,19 @@ export default function Sidebar({
             <div key={folder.id}>
               <div
                 className="group flex items-center mx-1 rounded-[4px] transition-all"
-                style={{ height: 28, paddingLeft: folderIndent }}
+                style={{ height: 26, paddingLeft: folderIndent }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1e1e1e' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
                 <button onClick={() => toggleFolder(folder.id)} className="shrink-0 p-0.5 mr-0.5" style={{ color: '#e8e8e8' }}>
-                  <ChevronRight size={11} style={{ opacity: 0.35, transform: isFolderOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
+                  <ChevronRight size={10} style={{ opacity: 0.35, transform: isFolderOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
                 </button>
                 <span className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
                   {isFolderOpen
-                    ? <FolderOpen size={14} style={{ opacity: 0.65, flexShrink: 0, color: '#6b9fd4' }} />
-                    : <Folder    size={14} style={{ opacity: 0.65, flexShrink: 0, color: '#6b9fd4' }} />
+                    ? <FolderOpen size={13} style={{ opacity: 0.55, flexShrink: 0, color: '#6b9fd4' }} />
+                    : <Folder    size={13} style={{ opacity: 0.55, flexShrink: 0, color: '#6b9fd4' }} />
                   }
-                  <span className="text-[13px] truncate" style={{ opacity: 0.72 }}>{folder.name}</span>
+                  <span className="text-[13px] truncate" style={{ opacity: 0.65 }}>{folder.name}</span>
                 </span>
                 <PlusBtn onClick={() => router.push(`/dashboard/courses/${courseId}?add=item&parent=${folder.id}`)} />
                 <MoreBtn onOpen={anchor => setMenu({ items: folderMenuItems, anchor })} />
@@ -471,13 +490,13 @@ export default function Sidebar({
             <div
               key={mat.id}
               className="group flex items-center mx-1 rounded-[4px] transition-all"
-              style={{ height: 28, paddingLeft: fileIndent, background: fileActive ? '#252525' : 'transparent' }}
+              style={{ height: 26, paddingLeft: fileIndent, background: fileActive ? '#252525' : 'transparent' }}
               onMouseEnter={e => { if (!fileActive) (e.currentTarget as HTMLElement).style.background = '#1e1e1e' }}
               onMouseLeave={e => { if (!fileActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
             >
               <Link href={fileHref} className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
-                <span style={{ opacity: fileActive ? 0.8 : 0.45 }}>{TypeIcon[mat.type]}</span>
-                <span className="text-[13px] truncate" style={{ opacity: fileActive ? 1 : 0.65 }}>{mat.title}</span>
+                <span style={{ opacity: fileActive ? 0.8 : 0.4 }}>{TypeIcon[mat.type]}</span>
+                <span className="text-[13px] truncate" style={{ opacity: fileActive ? 1 : 0.6 }}>{mat.title}</span>
                 <StatusDot status={mat.status} />
               </Link>
               <MoreBtn onOpen={anchor => setMenu({ items: fileMenuItems, anchor })} />
@@ -508,21 +527,28 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="flex flex-col shrink-0" style={{ width: 260, background: '#111111', borderRight: '1px solid #2e2e2e' }}>
-        <div className="flex-1 overflow-y-auto py-2">
+      <aside className="flex flex-col shrink-0" style={{ width: 240, background: '#111111', borderRight: '1px solid #2e2e2e' }}>
+        {/* ── Logo header ─────────────────────────────────────────── */}
+        <div className="flex items-center gap-2 px-3 shrink-0" style={{ height: 44 }}>
+          <BookMarked size={16} style={{ color: '#e9a84c', flexShrink: 0 }} />
+          <span className="text-[14px] font-semibold truncate" style={{ color: '#e8e8e8' }}>NotePilot</span>
+        </div>
+
+        {/* ── Tree ────────────────────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto py-1">
           {/* Home root row */}
           <div
             className="group flex items-center mx-1 px-2 rounded-[4px] transition-all mb-0.5"
-            style={{ height: 28 }}
+            style={{ height: 26 }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1a1a1a' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
           >
             <button onClick={() => setHomeOpen(prev => !prev)} className="shrink-0 p-0.5 mr-0.5" style={{ color: '#e8e8e8' }}>
-              <ChevronRight size={11} style={{ opacity: 0.4, transform: homeOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
+              <ChevronRight size={10} style={{ opacity: 0.4, transform: homeOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
             </button>
             <Link href="/dashboard" className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
-              <Home size={14} style={{ opacity: 0.6, flexShrink: 0 }} />
-              <span className="text-[12px] font-semibold truncate uppercase tracking-wider" style={{ opacity: 0.65, letterSpacing: '0.06em' }}>
+              <Home size={13} style={{ opacity: 0.5, flexShrink: 0 }} />
+              <span className="text-[13px] truncate" style={{ opacity: 0.65 }}>
                 Home
               </span>
             </Link>
@@ -535,7 +561,7 @@ export default function Sidebar({
               {renderHomeLevel(null, 0)}
 
               {courses.length === 0 && folders.filter(f => f.course_id === null && f.parent_folder_id === null && f.semester === null).length === 0 && (
-                <p className="px-4 pt-1 text-[12px]" style={{ color: '#e8e8e8', opacity: 0.28 }}>No items yet</p>
+                <p className="px-4 pt-1 text-[11px]" style={{ color: '#e8e8e8', opacity: 0.22 }}>No items yet</p>
               )}
 
           {semesters.map(semester => {
@@ -555,19 +581,19 @@ export default function Sidebar({
             return (
               <div key={semester} className="mb-0.5">
                 {/* Semester row */}
-                <div className="group flex items-center mx-1 px-2 rounded-[4px] transition-all" style={{ height: 28 }}
+                <div className="group flex items-center mx-1 px-2 rounded-[4px] transition-all" style={{ height: 26 }}
                   onMouseEnter={e => { if (!semActive) (e.currentTarget as HTMLElement).style.background = '#1a1a1a' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                 >
                   <button onClick={() => toggleSem(semester)} className="shrink-0 p-0.5 mr-0.5" style={{ color: '#e8e8e8' }}>
-                    <ChevronRight size={11} style={{ opacity: 0.4, transform: semOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
+                    <ChevronRight size={10} style={{ opacity: 0.4, transform: semOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
                   </button>
                   <Link href={semHref} className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
                     {semOpen
-                      ? <FolderOpen size={14} style={{ opacity: 0.6, flexShrink: 0, color: '#e9a84c' }} />
-                      : <Folder    size={14} style={{ opacity: 0.6, flexShrink: 0, color: '#e9a84c' }} />
+                      ? <FolderOpen size={13} style={{ opacity: 0.5, flexShrink: 0, color: '#e9a84c' }} />
+                      : <Folder    size={13} style={{ opacity: 0.5, flexShrink: 0, color: '#e9a84c' }} />
                     }
-                    <span className="text-[12px] font-semibold truncate uppercase tracking-wider" style={{ opacity: semActive ? 1 : 0.65, letterSpacing: '0.06em' }}>
+                    <span className="text-[13px] truncate" style={{ opacity: semActive ? 1 : 0.6 }}>
                       {semLabel}
                     </span>
                   </Link>
@@ -590,16 +616,16 @@ export default function Sidebar({
                   return (
                     <div key={course.id}>
                       {/* Course row */}
-                      <div className="group flex items-center mx-1 px-2 rounded-[4px] transition-all" style={{ height: 28, paddingLeft: 20, background: courseActive ? '#252525' : 'transparent' }}
-                        onMouseEnter={e => { if (!courseActive) (e.currentTarget as HTMLElement).style.background = '#1e1e1e' }}
+                      <div className="group flex items-center mx-1 px-2 rounded-[4px] transition-all" style={{ height: 26, paddingLeft: 20, background: courseActive ? '#1e1e1e' : 'transparent' }}
+                        onMouseEnter={e => { if (!courseActive) (e.currentTarget as HTMLElement).style.background = '#1a1a1a' }}
                         onMouseLeave={e => { if (!courseActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                       >
                         <button onClick={() => toggleCourse(course.id)} className="shrink-0 p-0.5 mr-0.5" style={{ color: '#e8e8e8' }}>
-                          <ChevronRight size={11} style={{ opacity: 0.35, transform: courseOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
+                          <ChevronRight size={10} style={{ opacity: 0.35, transform: courseOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 150ms ease-out' }} />
                         </button>
                         <Link href={courseHref} className="flex items-center gap-1.5 flex-1 min-w-0 mr-1" style={{ color: '#e8e8e8' }}>
-                          <BookOpen size={14} style={{ opacity: courseActive ? 0.8 : 0.5, flexShrink: 0 }} />
-                          <span className="text-[13px] truncate" style={{ opacity: courseActive ? 1 : 0.72 }}>{course.name}</span>
+                          <BookOpen size={13} style={{ opacity: courseActive ? 0.7 : 0.45, flexShrink: 0 }} />
+                          <span className="text-[13px] truncate" style={{ opacity: courseActive ? 1 : 0.65 }}>{course.name}</span>
                         </Link>
                         <PlusBtn onClick={() => router.push(`${courseHref}?add=item`)} />
                         <MoreBtn onOpen={anchor => setMenu({ items: courseMenuItems, anchor })} />
@@ -617,25 +643,67 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="shrink-0 flex items-center justify-between px-3 py-3" style={{ borderTop: '1px solid #2e2e2e' }}>
-          <Link
-            href="/dashboard?add=item&type=course"
-            className="text-[12px] transition-all"
-            style={{ color: '#e8e8e8', opacity: 0.38 }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.7')}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '0.38')}
-          >
-            + New Course
-          </Link>
+        {/* ── Footer: user + collapse ─────────────────────────────── */}
+        <div className="shrink-0 flex items-center justify-between px-2 py-2" style={{ borderTop: '1px solid #2e2e2e' }}>
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setUserMenuOpen(v => !v)}
+              className="flex items-center gap-2 rounded-[4px] px-2 py-1 transition-colors"
+              style={{ maxWidth: 180 }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#1e1e1e')}
+              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+            >
+              <div
+                className="flex items-center justify-center shrink-0 rounded-full text-[10px] font-semibold"
+                style={{ width: 22, height: 22, background: '#333333', color: '#e8e8e8' }}
+              >
+                {initials}
+              </div>
+              <span
+                className="text-[12px] truncate"
+                style={{ color: '#e8e8e8', opacity: 0.6, maxWidth: 110 }}
+              >
+                {displayName || userEmail}
+              </span>
+            </button>
+
+            {userMenuOpen && (
+              <div
+                className="absolute left-0 z-50 w-[200px] rounded-[8px] py-1"
+                style={{
+                  bottom: 'calc(100% + 6px)',
+                  background: '#222222',
+                  border: '1px solid #2e2e2e',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                }}
+              >
+                <div className="px-3 py-2" style={{ borderBottom: '1px solid #2e2e2e' }}>
+                  <p className="text-[12px] truncate" style={{ color: '#e8e8e8', opacity: 0.4 }}>
+                    {userEmail}
+                  </p>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center gap-2"
+                  style={{ color: '#e8e8e8' }}
+                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#2a2a2a')}
+                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+                >
+                  <LogOut size={12} style={{ opacity: 0.5 }} />
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => setCollapsed(true)}
-            className="flex items-center justify-center rounded-[6px] transition-all"
-            style={{ width: 26, height: 26, color: '#e8e8e8' }}
+            className="flex items-center justify-center rounded-[4px] transition-all"
+            style={{ width: 24, height: 24, color: '#e8e8e8' }}
             onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#1e1e1e')}
             onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
           >
-            <PanelLeftClose size={14} style={{ opacity: 0.45 }} />
+            <PanelLeftClose size={13} style={{ opacity: 0.4 }} />
           </button>
         </div>
       </aside>
