@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Book, Presentation, ClipboardList, Loader2, FileX, Trash2, Plus } from 'lucide-react'
-import { deleteBook, deleteLectureSlide, deleteExam, getSignedUrl } from './actions'
+import { Book, Presentation, ClipboardList, Loader2, FileX } from 'lucide-react'
+import { getSignedUrl } from './actions'
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed'
 
@@ -52,67 +52,12 @@ export default function CourseClient({
       .catch(err => { setViewerError(err instanceof Error ? err.message : 'Failed to load'); setViewerLoading(false) })
   }, [initialView]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleDelete() {
-    if (!initialView) return
-    const [type, id] = initialView.split(':') as ['book' | 'slide' | 'exam', string]
-    const title = titleForView(initialView)
-    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
-    try {
-      if (type === 'book')  await deleteBook(id, courseId)
-      if (type === 'slide') await deleteLectureSlide(id, courseId)
-      if (type === 'exam')  await deleteExam(id, courseId)
-      router.replace(`/dashboard/courses/${courseId}`)
-      router.refresh()
-    } catch (err) { alert(err instanceof Error ? err.message : 'Delete failed') }
-  }
-
   const viewerTitle = titleForView(initialView)
   const showOverview = !initialView
   const showViewer  = !!initialView
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* ── Toolbar ─────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between px-6" style={{ height: 44, borderBottom: '1px solid #2e2e2e', background: '#161616' }}>
-        {showViewer ? (
-          <>
-            <span className="text-[13px] truncate" style={{ color: '#e8e8e8', opacity: 0.65 }}>{viewerTitle}</span>
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-1.5 px-2 py-1 rounded text-[12px] transition-colors"
-              style={{ color: '#e8e8e8', opacity: 0.4 }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#f04438'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#e8e8e8'; (e.currentTarget as HTMLElement).style.opacity = '0.4' }}
-            >
-              <Trash2 size={13} /> Delete
-            </button>
-          </>
-        ) : (
-          <>
-            <span className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.65 }}>
-              {courseName}
-              {courseCode && <span className="font-mono ml-2 text-[12px]" style={{ opacity: 0.45 }}>{courseCode}</span>}
-            </span>
-            <div className="flex items-center gap-1">
-              {(['book', 'slide', 'exam'] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => router.push(`/dashboard/courses/${courseId}?add=${t}`)}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded text-[12px] transition-colors"
-                  style={{ color: '#e8e8e8', opacity: 0.5 }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#2a2a2a'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.opacity = '0.5' }}
-                >
-                  {t === 'book' && <><Book size={12} /><Plus size={10} /> Book</>}
-                  {t === 'slide' && <><Presentation size={12} /><Plus size={10} /> Slides</>}
-                  {t === 'exam' && <><ClipboardList size={12} /><Plus size={10} /> Exam</>}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
       {/* ── Overview ────────────────────────────────────────────── */}
       {showOverview && (
         <div className="flex-1 overflow-y-auto">
