@@ -77,7 +77,6 @@ export async function createFolder(
   courseId: string | null,
   parentFolderId: string | null,
   name: string,
-  semester?: string | null,
 ) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -101,7 +100,6 @@ export async function createFolder(
     course_id: resolvedCourseId,
     parent_folder_id: parentFolderId,
     name: name.trim(),
-    semester: semester ?? null,
   })
 
   if (error) throw new Error(error.message)

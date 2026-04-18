@@ -1,17 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import CourseClient from './CourseClient'
-import AddMaterialPanel from './AddMaterialPanel'
+import AddItemPanel from '@/app/dashboard/AddItemPanel'
 
 export default async function CoursePage({
   params,
   searchParams,
 }: {
   params: Promise<{ courseId: string }>
-  searchParams: Promise<{ view?: string; add?: string; parent?: string }>
+  searchParams: Promise<{ view?: string; add?: string; parent?: string; type?: string }>
 }) {
   const { courseId } = await params
-  const { view, add, parent } = await searchParams
+  const { view, add, parent, type } = await searchParams
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -26,13 +26,21 @@ export default async function CoursePage({
 
   if (!course) notFound()
 
-  // Add panel — handles all add types including folder
-  if (add === 'book' || add === 'slide' || add === 'exam' || add === 'folder') {
+  // Unified add panel — handles all add types
+  if (add === 'item' || add === 'book' || add === 'slide' || add === 'exam' || add === 'folder') {
+    // Map legacy ?add=book to initialType
+    const initialType = add === 'item'
+      ? (type as 'folder' | 'book' | 'slide' | 'exam' | null) ?? null
+      : add as 'folder' | 'book' | 'slide' | 'exam'
+
     return (
-      <AddMaterialPanel
+      <AddItemPanel
+        courses={[]}
         courseId={courseId}
-        initialType={add}
+        courseName={course.name}
         parentFolderId={parent ?? null}
+        semester={null}
+        initialType={initialType}
       />
     )
   }

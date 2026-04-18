@@ -1,29 +1,37 @@
 import { createClient } from '@/lib/supabase/server'
 import CoursesClient from './CoursesClient'
 import SemesterPanel from './SemesterPanel'
-import AddCoursePanel from './AddCoursePanel'
 import AddItemPanel from './AddItemPanel'
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ semester?: string; add?: string; parent?: string }>
+  searchParams: Promise<{ semester?: string; add?: string; parent?: string; type?: string }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
 
-  // ── Add item panel (type picker for Home and standalone folders) ─────────
-  if (params.add === 'item') {
+  // ── Unified add-item panel ────────────────────────────────────────────────
+  if (params.add === 'item' || params.add === 'course') {
     const { data: courses } = await supabase
       .from('courses')
       .select('id, name, code')
       .order('created_at', { ascending: true })
-    return <AddItemPanel courses={courses ?? []} parentFolderId={params.parent ?? null} semester={params.semester ?? null} />
-  }
 
-  // ── Add course panel ────────────────────────────────────────────────────
-  if (params.add === 'course') {
-    return <AddCoursePanel semester={params.semester} />
+    const initialType = params.add === 'course'
+      ? 'course' as const
+      : (params.type as 'course' | 'folder' | 'book' | 'slide' | 'exam' | null) ?? null
+
+    return (
+      <AddItemPanel
+        courses={courses ?? []}
+        courseId={null}
+        courseName={null}
+        parentFolderId={params.parent ?? null}
+        semester={params.semester ?? null}
+        initialType={initialType}
+      />
+    )
   }
 
   // ── Semester info panel ─────────────────────────────────────────────────

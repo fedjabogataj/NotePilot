@@ -445,7 +445,7 @@ export default function Sidebar({
                   }
                   <span className="text-[13px] truncate" style={{ opacity: 0.72 }}>{folder.name}</span>
                 </span>
-                <PlusBtn onClick={() => router.push(`/dashboard?add=item&parent=${folder.id}`)} />
+                <PlusBtn onClick={() => router.push(`/dashboard/courses/${courseId}?add=item&parent=${folder.id}`)} />
                 <MoreBtn onOpen={anchor => setMenu({ items: folderMenuItems, anchor })} />
               </div>
               {isFolderOpen && renderLevel(courseId, folder.id, depth + 1)}
@@ -546,7 +546,7 @@ export default function Sidebar({
             const semActive = searchParams.get('semester') === semester && !searchParams.get('add')
 
             const semMenuItems: MenuItem[] = [
-              { kind: 'item', icon: '➕', label: 'Add Course', action: () => router.push(semester ? `/dashboard?add=course&semester=${encodeURIComponent(semester)}` : '/dashboard?add=course') },
+              { kind: 'item', icon: '➕', label: 'Add Course', action: () => router.push(semester ? `/dashboard?add=item&type=course&semester=${encodeURIComponent(semester)}` : '/dashboard?add=item&type=course') },
               { kind: 'separator' },
               { kind: 'item', icon: '✏️', label: 'Rename', disabled: true, action: () => {} },
               { kind: 'item', icon: '🗑', label: 'Delete', disabled: true, danger: true, action: () => {} },
@@ -601,7 +601,7 @@ export default function Sidebar({
                           <BookOpen size={14} style={{ opacity: courseActive ? 0.8 : 0.5, flexShrink: 0 }} />
                           <span className="text-[13px] truncate" style={{ opacity: courseActive ? 1 : 0.72 }}>{course.name}</span>
                         </Link>
-                        <PlusBtn onClick={() => router.push(`${courseHref}?add=book`)} />
+                        <PlusBtn onClick={() => router.push(`${courseHref}?add=item`)} />
                         <MoreBtn onOpen={anchor => setMenu({ items: courseMenuItems, anchor })} />
                       </div>
 
@@ -620,7 +620,7 @@ export default function Sidebar({
         {/* Footer */}
         <div className="shrink-0 flex items-center justify-between px-3 py-3" style={{ borderTop: '1px solid #2e2e2e' }}>
           <Link
-            href="/dashboard?add=course"
+            href="/dashboard?add=item&type=course"
             className="text-[12px] transition-all"
             style={{ color: '#e8e8e8', opacity: 0.38 }}
             onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.7')}
