@@ -10,12 +10,12 @@ import { createBook, processBook, createLectureSlide, processLectureSlide, creat
 type ItemType = 'course' | 'folder' | 'book' | 'slide' | 'exam' | 'note'
 type Course = { id: string; name: string; code: string | null }
 
-const inputStyle = { background: '#1a1a1a', border: '1px solid #2e2e2e', color: '#e8e8e8' } as const
+const inputStyle = { background: '#191919', border: '1px solid #2d2d2d', color: '#ebebeb' } as const
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.65 }}>{label}</label>
+      <label className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.65 }}>{label}</label>
       {children}
     </div>
   )
@@ -25,10 +25,10 @@ function DarkInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full rounded-lg px-3 py-2 text-[14px] outline-none transition-all"
+      className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-all"
       style={{ ...inputStyle, ...props.style }}
       onFocus={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(233,168,76,0.15)'; props.onFocus?.(e) }}
-      onBlur={e => { e.currentTarget.style.borderColor = '#2e2e2e'; e.currentTarget.style.boxShadow = 'none'; props.onBlur?.(e) }}
+      onBlur={e => { e.currentTarget.style.borderColor = '#2d2d2d'; e.currentTarget.style.boxShadow = 'none'; props.onBlur?.(e) }}
     />
   )
 }
@@ -37,23 +37,23 @@ function DarkTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) 
   return (
     <textarea
       {...props}
-      className="w-full rounded-lg px-3 py-2 text-[14px] outline-none transition-all resize-none"
+      className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-all resize-none"
       style={inputStyle}
       onFocus={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.boxShadow = '0 0 0 2px rgba(233,168,76,0.15)' }}
-      onBlur={e => { e.currentTarget.style.borderColor = '#2e2e2e'; e.currentTarget.style.boxShadow = 'none' }}
+      onBlur={e => { e.currentTarget.style.borderColor = '#2d2d2d'; e.currentTarget.style.boxShadow = 'none' }}
     />
   )
 }
 
 function ActionRow({ onCancel, submitLabel, disabled }: { onCancel: () => void; submitLabel: string; disabled: boolean }) {
   return (
-    <div className="flex items-center justify-end gap-3" style={{ borderTop: '1px solid #2e2e2e', paddingTop: 20 }}>
+    <div className="flex items-center justify-end gap-3" style={{ borderTop: '1px solid #2d2d2d', paddingTop: 20 }}>
       <button
         type="button"
         onClick={onCancel}
-        className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors"
-        style={{ color: '#e8e8e8', opacity: 0.6 }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#2a2a2a'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
+        className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+        style={{ color: '#ebebeb', opacity: 0.6 }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#323232'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.opacity = '0.6' }}
       >
         Cancel
@@ -61,7 +61,7 @@ function ActionRow({ onCancel, submitLabel, disabled }: { onCancel: () => void; 
       <button
         type="submit"
         disabled={disabled}
-        className="px-5 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-50"
+        className="px-5 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
         style={{ background: '#e9a84c', color: '#111111' }}
         onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLElement).style.background = '#f0b85e' }}
         onMouseLeave={e => { if (!disabled) (e.currentTarget as HTMLElement).style.background = '#e9a84c' }}
@@ -115,22 +115,22 @@ function TypeButton({
       onClick={disabled ? undefined : onClick}
       className="flex items-start gap-3 p-4 rounded-xl text-left transition-all"
       style={{
-        background: active ? '#2a2a2a' : '#1e1e1e',
-        border: `1px solid ${active ? '#e9a84c' : '#2e2e2e'}`,
-        color: '#e8e8e8',
+        background: active ? '#323232' : '#262626',
+        border: `1px solid ${active ? '#e9a84c' : '#2d2d2d'}`,
+        color: '#ebebeb',
         opacity: disabled || comingSoon ? 0.4 : 1,
         cursor: disabled || comingSoon ? 'default' : 'pointer',
       }}
     >
       <Icon size={18} style={{ opacity: active ? 0.9 : 0.45, flexShrink: 0, marginTop: 1 }} />
       <div>
-        <p className="text-[13px] font-medium" style={{ opacity: active ? 1 : 0.7 }}>{label}</p>
-        <p className="text-[11px] mt-0.5" style={{ opacity: 0.4 }}>{desc}</p>
+        <p className="text-sm font-medium" style={{ opacity: active ? 1 : 0.7 }}>{label}</p>
+        <p className="text-[0.6875rem] mt-0.5" style={{ opacity: 0.4 }}>{desc}</p>
         {comingSoon && (
-          <span className="text-[10px] mt-1 inline-block" style={{ color: '#4d94ff', opacity: 0.8 }}>Coming soon</span>
+          <span className="text-[0.625rem] mt-1 inline-block" style={{ color: '#4d94ff', opacity: 0.8 }}>Coming soon</span>
         )}
         {disabled && disabledReason && (
-          <span className="text-[10px] mt-1 inline-block" style={{ color: '#e8e8e8', opacity: 0.5 }}>{disabledReason}</span>
+          <span className="text-[0.625rem] mt-1 inline-block" style={{ color: '#ebebeb', opacity: 0.5 }}>{disabledReason}</span>
         )}
       </div>
     </button>
@@ -144,14 +144,12 @@ export default function AddItemPanel({
   courseId,
   courseName,
   parentFolderId,
-  semester,
   initialType,
 }: {
   courses: Course[]
   courseId: string | null
   courseName: string | null
   parentFolderId: string | null
-  semester: string | null
   initialType: ItemType | null
 }) {
   const router = useRouter()
@@ -181,7 +179,7 @@ export default function AddItemPanel({
   const needsCourseSelection = MATERIAL_TYPES.has(type) && !courseId
 
   // Context label
-  const contextLabel = courseName ?? (semester ? semester : parentFolderId ? 'Folder' : 'Home')
+  const contextLabel = courseName ?? (parentFolderId ? 'Folder' : 'Home')
 
   function handleTypeChange(t: ItemType) {
     if (t === 'course' && courseId) return
@@ -224,7 +222,7 @@ export default function AddItemPanel({
     setError('')
     startTransition(async () => {
       try {
-        const { courseId: newId } = await createCourse({ name, code: get('code'), semester: get('semester'), description: get('description') })
+        const { courseId: newId } = await createCourse({ name, code: get('code'), description: get('description') })
         router.push(`/dashboard/courses/${newId}`)
         router.refresh()
       } catch (err) {
@@ -307,14 +305,14 @@ export default function AddItemPanel({
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto px-8" style={{ maxWidth: 680, paddingTop: 48, paddingBottom: 56 }}>
-        <p className="text-[12px] uppercase tracking-widest mb-2" style={{ color: '#e8e8e8', opacity: 0.35, letterSpacing: '0.1em' }}>
+        <p className="text-xs uppercase tracking-widest mb-2" style={{ color: '#ebebeb', opacity: 0.35, letterSpacing: '0.1em' }}>
           {contextLabel}
         </p>
-        <h1 className="font-bold mb-8" style={{ fontSize: 28, color: '#e8e8e8' }}>Add New Item</h1>
+        <h1 className="text-3xl font-bold mb-8" style={{ color: '#ebebeb' }}>Add New Item</h1>
 
         {/* ── Organise: Folder & Course ──────────────────────────────── */}
         <div className="flex flex-col gap-2 mb-4">
-          <p className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.65 }}>Organise</p>
+          <p className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.65 }}>Organise</p>
           <div className="grid grid-cols-2 gap-3">
             {ORGANISE_TYPES.map(({ type: t, label, icon, desc }) => (
               <TypeButton
@@ -333,7 +331,7 @@ export default function AddItemPanel({
 
         {/* ── Files: Book, Slide, Exam, Note ─────────────────────────── */}
         <div className="flex flex-col gap-2 mb-6">
-          <p className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.65 }}>Files</p>
+          <p className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.65 }}>Files</p>
           <div className="grid grid-cols-2 gap-3">
             {FILE_TYPES.map(({ type: t, label, icon, desc, available }) => (
               <TypeButton
@@ -355,18 +353,13 @@ export default function AddItemPanel({
             <Field label="Name *">
               <DarkInput name="name" required placeholder="e.g. Introduction to Algorithms" autoFocus />
             </Field>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Course Code">
-                <DarkInput name="code" placeholder="e.g. CS301" />
-              </Field>
-              <Field label="Semester">
-                <DarkInput name="semester" defaultValue={semester ?? ''} placeholder="e.g. Spring 2026" />
-              </Field>
-            </div>
+            <Field label="Course Code">
+              <DarkInput name="code" placeholder="e.g. CS301" />
+            </Field>
             <Field label="Description">
               <DarkTextarea name="description" rows={3} placeholder="Optional" />
             </Field>
-            {error && <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>{error}</p>}
+            {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>{error}</p>}
             <ActionRow onCancel={goBack} submitLabel={isPending ? 'Creating…' : 'Create Course'} disabled={isPending} />
           </form>
         )}
@@ -377,7 +370,7 @@ export default function AddItemPanel({
             <Field label="Name *">
               <DarkInput name="name" required placeholder="e.g. Research, Week 1, Semester 1…" autoFocus />
             </Field>
-            {error && <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>{error}</p>}
+            {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>{error}</p>}
             <ActionRow onCancel={goBack} submitLabel={isPending ? 'Creating…' : 'Create Folder'} disabled={isPending} />
           </form>
         )}
@@ -385,17 +378,17 @@ export default function AddItemPanel({
         {/* ── Material: course picker (only when not inside a course) ───── */}
         {needsCourseSelection && !selectedCourseId && (
           <div className="flex flex-col gap-4">
-            <p className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.65 }}>
+            <p className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.65 }}>
               Select a course to add this {FILE_TYPES.find(f => f.type === type)?.label.toLowerCase()} to
             </p>
 
             {courses.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ background: '#1a1a1a', border: '1px solid #2e2e2e' }}>
-                <p className="text-[13px] mb-1" style={{ color: '#e8e8e8', opacity: 0.4 }}>No courses yet</p>
+              <div className="flex flex-col items-center justify-center py-10 rounded-xl" style={{ background: '#191919', border: '1px solid #2d2d2d' }}>
+                <p className="text-sm mb-1" style={{ color: '#ebebeb', opacity: 0.4 }}>No courses yet</p>
                 <button
                   type="button"
                   onClick={() => handleTypeChange('course')}
-                  className="text-[12px] mt-2 transition-colors"
+                  className="text-xs mt-2 transition-colors"
                   style={{ color: '#e9a84c', opacity: 0.8 }}
                   onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
                   onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '0.8')}
@@ -412,17 +405,17 @@ export default function AddItemPanel({
                     onClick={() => { setSelectedCourseId(course.id); setError('') }}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all"
                     style={{
-                      background: '#1a1a1a',
-                      border: '1px solid #2e2e2e',
-                      color: '#e8e8e8',
+                      background: '#191919',
+                      border: '1px solid #2d2d2d',
+                      color: '#ebebeb',
                     }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#3a3a3a'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#2e2e2e'}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#404040'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#2d2d2d'}
                   >
                     <BookOpen size={14} style={{ opacity: 0.4, flexShrink: 0 }} />
-                    <span className="text-[13px]" style={{ opacity: 0.72 }}>{course.name}</span>
+                    <span className="text-sm" style={{ opacity: 0.72 }}>{course.name}</span>
                     {course.code && (
-                      <span className="ml-auto font-mono text-[11px] px-1.5 py-0.5 rounded" style={{ background: '#2a2a2a', opacity: 0.6 }}>
+                      <span className="ml-auto font-mono text-[0.6875rem] px-1.5 py-0.5 rounded" style={{ background: '#323232', opacity: 0.6 }}>
                         {course.code}
                       </span>
                     )}
@@ -432,7 +425,7 @@ export default function AddItemPanel({
               </div>
             )}
 
-            {error && <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>{error}</p>}
+            {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>{error}</p>}
           </div>
         )}
 
@@ -443,13 +436,13 @@ export default function AddItemPanel({
             {needsCourseSelection && selectedCourseId && (
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen size={14} style={{ color: '#e9a84c', opacity: 0.7 }} />
-                <span className="text-[13px]" style={{ color: '#e8e8e8', opacity: 0.7 }}>
+                <span className="text-sm" style={{ color: '#ebebeb', opacity: 0.7 }}>
                   {courses.find(c => c.id === selectedCourseId)?.name}
                 </span>
                 <button
                   type="button"
                   onClick={() => { setSelectedCourseId(null); setTitle(''); setSelectedFile(null); setError('') }}
-                  className="text-[11px] ml-auto transition-colors"
+                  className="text-[0.6875rem] ml-auto transition-colors"
                   style={{ color: '#e9a84c', opacity: 0.6 }}
                   onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
                   onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '0.6')}
@@ -492,12 +485,12 @@ export default function AddItemPanel({
 
             {/* File upload */}
             <div className="flex flex-col gap-2">
-              <p className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.65 }}>Source</p>
+                <p className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.65 }}>Source</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-3 p-4 rounded-xl" style={{ background: '#1e1e1e', border: '1px solid #e9a84c' }}>
+                <div className="flex flex-col gap-3 p-4 rounded-xl" style={{ background: '#262626', border: '1px solid #e9a84c' }}>
                   <div className="flex items-center gap-2">
                     <Upload size={15} style={{ color: '#e9a84c', opacity: 0.8 }} />
-                    <span className="text-[13px] font-medium" style={{ color: '#e8e8e8' }}>Import File</span>
+                      <span className="text-sm font-medium" style={{ color: '#ebebeb' }}>Import File</span>
                   </div>
                   <div
                     onClick={() => fileRef.current?.click()}
@@ -507,31 +500,31 @@ export default function AddItemPanel({
                     className="flex flex-col items-center justify-center gap-2 rounded-lg cursor-pointer transition-all"
                     style={{
                       minHeight: 80,
-                      border: `2px dashed ${dragOver ? '#e9a84c' : '#333333'}`,
+                      border: `2px dashed ${dragOver ? '#e9a84c' : '#404040'}`,
                       background: dragOver ? 'rgba(233,168,76,0.05)' : 'transparent',
                     }}
                   >
                     {selectedFile ? (
-                      <p className="text-[12px] text-center px-2" style={{ color: '#e9a84c' }}>{selectedFile.name}</p>
+                      <p className="text-xs text-center px-2" style={{ color: '#e9a84c' }}>{selectedFile.name}</p>
                     ) : (
                       <>
-                        <p className="text-[12px]" style={{ color: '#e8e8e8', opacity: 0.45 }}>Drop file here or click</p>
-                        <p className="text-[11px]" style={{ color: '#e8e8e8', opacity: 0.25 }}>PDF or PowerPoint · max 50 MB</p>
+                        <p className="text-xs" style={{ color: '#ebebeb', opacity: 0.45 }}>Drop file here or click</p>
+                        <p className="text-[0.6875rem]" style={{ color: '#ebebeb', opacity: 0.25 }}>PDF or PowerPoint · max 50 MB</p>
                       </>
                     )}
                   </div>
                   <input ref={fileRef} type="file" accept=".pdf,.pptx,.ppt" className="hidden" onChange={handleFileInput} />
                 </div>
 
-                <div className="flex flex-col gap-3 p-4 rounded-xl" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', opacity: 0.5 }}>
+                <div className="flex flex-col gap-3 p-4 rounded-xl" style={{ background: '#191919', border: '1px solid #323232', opacity: 0.5 }}>
                   <div className="flex items-center gap-2">
                     <Sparkles size={15} style={{ color: '#4d94ff', opacity: 0.8 }} />
-                    <span className="text-[13px] font-medium" style={{ color: '#e8e8e8' }}>Generate with AI</span>
+                    <span className="text-sm font-medium" style={{ color: '#ebebeb' }}>Generate with AI</span>
                   </div>
-                  <p className="text-[12px]" style={{ color: '#e8e8e8', opacity: 0.5 }}>
+                  <p className="text-xs" style={{ color: '#ebebeb', opacity: 0.5 }}>
                     Automatically generate notes and summaries from your course materials.
                   </p>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full self-start" style={{ background: '#222222', color: '#4d94ff', opacity: 0.8 }}>
+                  <span className="text-[0.6875rem] px-2 py-0.5 rounded-full self-start" style={{ background: '#2a2a2a', color: '#4d94ff', opacity: 0.8 }}>
                     Coming soon
                   </span>
                 </div>
@@ -539,13 +532,13 @@ export default function AddItemPanel({
             </div>
 
             {error && (
-              <p className="text-[13px] px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>
+              <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}>
                 {error}
               </p>
             )}
 
             {uploading && (
-              <p className="text-[13px] text-center" style={{ color: '#e9a84c' }}>
+              <p className="text-sm text-center" style={{ color: '#e9a84c' }}>
                 Uploading… please wait.
               </p>
             )}

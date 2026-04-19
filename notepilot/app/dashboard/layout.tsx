@@ -8,7 +8,6 @@ export type SidebarCourse = {
   id: string
   name: string
   code: string | null
-  semester: string | null
 }
 
 export type SidebarFolder = {
@@ -16,7 +15,6 @@ export type SidebarFolder = {
   name: string
   course_id: string | null    // null = not tied to a specific course
   parent_folder_id: string | null
-  semester: string | null     // set for semester-level folders, null for home/course
 }
 
 export type SidebarMaterial = {
@@ -38,11 +36,11 @@ export default async function DashboardLayout({
   if (!user) redirect('/login')
 
   const [{ data: courses }, { data: books }, { data: slides }, { data: exams }, { data: foldersData }] = await Promise.all([
-    supabase.from('courses').select('id, name, code, semester').eq('user_id', user.id).order('created_at', { ascending: true }),
+    supabase.from('courses').select('id, name, code').eq('user_id', user.id).order('created_at', { ascending: true }),
     supabase.from('books').select('id, title, processing_status, course_id, folder_id').eq('user_id', user.id),
     supabase.from('lecture_slides').select('id, title, processing_status, course_id, folder_id').eq('user_id', user.id),
     supabase.from('exams').select('id, title, processing_status, course_id, folder_id').eq('user_id', user.id),
-    supabase.from('folders').select('id, name, course_id, parent_folder_id, semester').eq('user_id', user.id).order('created_at', { ascending: true }),
+    supabase.from('folders').select('id, name, course_id, parent_folder_id').eq('user_id', user.id).order('created_at', { ascending: true }),
   ])
 
   const materials: SidebarMaterial[] = [
@@ -58,8 +56,8 @@ export default async function DashboardLayout({
   const courseList = (courses ?? []) as SidebarCourse[]
 
   return (
-    <div className="flex" style={{ height: '100dvh', background: '#1a1a1a', overflow: 'hidden' }}>
-      <Suspense fallback={<div style={{ width: 240, background: '#111111', borderRight: '1px solid #2e2e2e' }} />}>
+    <div className="flex" style={{ height: '100dvh', background: 'var(--color-np-base)', overflow: 'hidden' }}>
+      <Suspense fallback={<div style={{ width: 240, background: 'var(--color-np-sidebar)', borderRight: '1px solid var(--color-np-border)' }} />}>
         <Sidebar
           courses={courseList}
           materials={materials}

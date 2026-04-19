@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/server'
 type CourseInput = {
   name: string
   code: string
-  semester: string
   description: string
 }
 
@@ -23,7 +22,6 @@ export async function createCourse(data: CourseInput) {
       user_id: user.id,
       name: data.name,
       code: data.code || null,
-      semester: data.semester || null,
       description: data.description || null,
     })
     .select('id')
@@ -46,7 +44,6 @@ export async function updateCourse(id: string, data: CourseInput) {
     .update({
       name: data.name,
       code: data.code || null,
-      semester: data.semester || null,
       description: data.description || null,
     })
     .eq('id', id)

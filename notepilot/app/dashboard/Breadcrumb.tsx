@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 
-type Course = { id: string; name: string; code: string | null; semester: string | null }
+type Course = { id: string; name: string; code: string | null }
 
 export default function Breadcrumb({ courses }: { courses: Course[] }) {
   const pathname = usePathname()
@@ -15,18 +15,9 @@ export default function Breadcrumb({ courses }: { courses: Course[] }) {
   // Always start with Home
   crumbs.push({ label: 'Home', href: '/dashboard' })
 
-  // Semester view: /dashboard?semester=X
-  const semester = searchParams.get('semester')
-  if (semester && pathname === '/dashboard') {
-    crumbs.push({ label: semester, href: `/dashboard?semester=${encodeURIComponent(semester)}` })
-  }
-
   // Add item at dashboard level
   const addParam = searchParams.get('add')
   if (addParam && pathname === '/dashboard') {
-    if (semester) {
-      crumbs.push({ label: semester, href: `/dashboard?semester=${encodeURIComponent(semester)}` })
-    }
     crumbs.push({ label: 'Add Item', href: '#' })
   }
 
@@ -36,20 +27,14 @@ export default function Breadcrumb({ courses }: { courses: Course[] }) {
     const courseId = courseMatch[1]
     const course = courses.find(c => c.id === courseId)
     if (course) {
-      if (course.semester) {
-        crumbs.push({ label: course.semester, href: `/dashboard?semester=${encodeURIComponent(course.semester)}` })
-      }
       crumbs.push({ label: course.name, href: `/dashboard/courses/${courseId}` })
 
-      // Sub-pages within a course
       if (addParam) {
         crumbs.push({ label: 'Add Item', href: '#' })
       }
       const view = searchParams.get('view')
       if (view) {
-        const [, id] = view.split(':')
-        const title = courses.length ? undefined : undefined // we don't have material titles here
-        crumbs.push({ label: id ? 'Viewer' : 'View', href: '#' })
+        crumbs.push({ label: 'Viewer', href: '#' })
       }
     }
   }
@@ -60,7 +45,7 @@ export default function Breadcrumb({ courses }: { courses: Course[] }) {
   return (
     <div
       className="flex items-center gap-1 px-4 shrink-0"
-      style={{ height: 36, color: '#e8e8e8', borderBottom: '1px solid #2e2e2e' }}
+      style={{ height: 36, color: 'var(--color-np-text)', borderBottom: '1px solid var(--color-np-border)' }}
     >
       {crumbs.map((crumb, i) => {
         const isLast = i === crumbs.length - 1
@@ -68,11 +53,11 @@ export default function Breadcrumb({ courses }: { courses: Course[] }) {
           <span key={i} className="flex items-center gap-1">
             {i > 0 && <ChevronRight size={12} style={{ opacity: 0.25 }} />}
             {isLast ? (
-              <span className="text-[13px]" style={{ opacity: 0.65 }}>{crumb.label}</span>
+              <span className="text-sm" style={{ opacity: 0.65 }}>{crumb.label}</span>
             ) : (
               <Link
                 href={crumb.href}
-                className="text-[13px] transition-colors"
+                className="text-sm transition-colors"
                 style={{ opacity: 0.4 }}
                 onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.7')}
                 onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '0.4')}

@@ -44,24 +44,24 @@ type ModalType = 'book' | 'slide' | 'exam' | null
 // ── Dark input ─────────────────────────────────────────────────────────────
 
 const inputBaseStyle = {
-  background: '#1a1a1a',
-  border: '1px solid #2e2e2e',
-  color: '#e8e8e8',
+  background: '#191919',
+  border: '1px solid #2d2d2d',
+  color: '#ebebeb',
 } as const
 
 function DarkInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full rounded-lg px-3 py-2 text-[14px] outline-none transition-all"
+      className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-all"
       style={inputBaseStyle}
       onFocus={e => {
-        e.currentTarget.style.borderColor = '#444444'
+        e.currentTarget.style.borderColor = '#4a4a4a'
         e.currentTarget.style.boxShadow = '0 0 0 2px rgba(233,168,76,0.15)'
         props.onFocus?.(e)
       }}
       onBlur={e => {
-        e.currentTarget.style.borderColor = '#2e2e2e'
+        e.currentTarget.style.borderColor = '#2d2d2d'
         e.currentTarget.style.boxShadow = 'none'
         props.onBlur?.(e)
       }}
@@ -107,36 +107,36 @@ function MaterialList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="flex items-center justify-center py-16" style={{ color: '#e8e8e8', opacity: 0.3 }}>
-        <p className="text-[13px]">{emptyText}</p>
+      <div className="flex items-center justify-center py-16" style={{ color: '#ebebeb', opacity: 0.3 }}>
+        <p className="text-sm">{emptyText}</p>
       </div>
     )
   }
 
   return (
-    <div style={{ borderTop: '1px solid #2e2e2e' }}>
+    <div style={{ borderTop: '1px solid #2d2d2d' }}>
       {items.map(item => (
         <div
           key={item.id}
           className="group flex items-center justify-between gap-4"
           style={{
             padding: '12px 0',
-            borderBottom: '1px solid #2e2e2e',
+            borderBottom: '1px solid #2d2d2d',
           }}
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <StatusDot status={item.status} />
             <div className="min-w-0">
-              <p className="text-[14px] font-medium truncate" style={{ color: '#e8e8e8' }}>
+              <p className="text-sm font-medium truncate" style={{ color: '#ebebeb' }}>
                 {item.title}
               </p>
               {item.subtitle && (
-                <p className="text-[12px] mt-0.5 truncate" style={{ color: '#e8e8e8', opacity: 0.45 }}>
+                <p className="text-xs mt-0.5 truncate" style={{ color: '#ebebeb', opacity: 0.45 }}>
                   {item.subtitle}
                 </p>
               )}
               {item.errorMessage && (
-                <p className="text-[12px] mt-0.5 truncate" style={{ color: '#f04438' }} title={item.errorMessage}>
+                <p className="text-xs mt-0.5 truncate" style={{ color: '#f04438' }} title={item.errorMessage}>
                   {item.errorMessage}
                 </p>
               )}
@@ -146,7 +146,7 @@ function MaterialList({
           <div className="flex items-center gap-1 shrink-0">
             {/* Status label for non-ready */}
             {item.status !== 'ready' && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full" style={{
+              <span className="text-[0.6875rem] px-2 py-0.5 rounded-full" style={{
                 color: item.status === 'failed' ? '#f04438' : '#e9a84c',
                 background: item.status === 'failed' ? 'rgba(240,68,56,0.1)' : 'rgba(233,168,76,0.1)',
               }}>
@@ -160,8 +160,8 @@ function MaterialList({
                 onClick={() => onView(item.type, item.id)}
                 title="Open file"
                 className="flex items-center justify-center rounded transition-all opacity-0 group-hover:opacity-100"
-                style={{ width: 28, height: 28, color: '#e8e8e8' }}
-                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#2a2a2a')}
+                style={{ width: 28, height: 28, color: '#ebebeb' }}
+                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#323232')}
                 onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -177,14 +177,14 @@ function MaterialList({
               onClick={() => onDelete(item.id, item.title)}
               title="Delete"
               className="flex items-center justify-center rounded transition-all opacity-0 group-hover:opacity-100"
-              style={{ width: 28, height: 28, color: '#e8e8e8' }}
+              style={{ width: 28, height: 28, color: '#ebebeb' }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLElement).style.background = 'rgba(240,68,56,0.15)'
                 ;(e.currentTarget as HTMLElement).style.color = '#f04438'
               }}
               onMouseLeave={e => {
                 (e.currentTarget as HTMLElement).style.background = 'transparent'
-                ;(e.currentTarget as HTMLElement).style.color = '#e8e8e8'
+                ;(e.currentTarget as HTMLElement).style.color = '#ebebeb'
               }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -413,9 +413,9 @@ export default function MaterialsClient({
     return (
       <button
         onClick={() => setTab(t)}
-        className="px-4 py-2.5 text-[13px] font-medium transition-colors"
+        className="px-4 py-2.5 text-sm font-medium transition-colors"
         style={{
-          color: active ? '#e8e8e8' : '#e8e8e8',
+          color: active ? '#ebebeb' : '#ebebeb',
           opacity: active ? 1 : 0.45,
           borderBottom: active ? '2px solid #e9a84c' : '2px solid transparent',
         }}
@@ -430,7 +430,7 @@ export default function MaterialsClient({
       {/* Tab bar */}
       <div
         className="flex items-center justify-between"
-        style={{ borderBottom: '1px solid #2e2e2e', marginBottom: 0 }}
+        style={{ borderBottom: '1px solid #2d2d2d', marginBottom: 0 }}
       >
         <div className="flex">
           <TabBtn t="books" label={`Books${books.length ? ` (${books.length})` : ''}`} />
@@ -439,10 +439,10 @@ export default function MaterialsClient({
         </div>
         <button
           onClick={() => openModal(modalType)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors"
-          style={{ background: '#333333', color: '#e8e8e8' }}
-          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#3d3d3d')}
-          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = '#333333')}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+          style={{ background: '#3a3a3a', color: '#ebebeb' }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#4a4a4a')}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = '#3a3a3a')}
         >
           <span className="text-base leading-none">+</span>
           {addBtnLabel}
@@ -497,14 +497,14 @@ export default function MaterialsClient({
         ref={dialogRef}
         className="rounded-xl p-0 w-full max-w-md backdrop:bg-black/60"
         style={{
-          background: '#222222',
-          border: '1px solid #2e2e2e',
+          background: '#323232',
+          border: '1px solid #2d2d2d',
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
         }}
         onClose={() => { setModal(null); setFormError('') }}
       >
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
-          <h2 className="text-[18px] font-semibold" style={{ color: '#e8e8e8' }}>
+          <h2 className="text-lg font-semibold" style={{ color: '#ebebeb' }}>
             {modal === 'book' && 'Add Book'}
             {modal === 'slide' && 'Add Slide Deck'}
             {modal === 'exam' && 'Add Exam Paper'}
@@ -512,7 +512,7 @@ export default function MaterialsClient({
 
           {formError && (
             <p
-              className="text-[13px] px-3 py-2 rounded-lg"
+              className="text-sm px-3 py-2 rounded-lg"
               style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}
             >
               {formError}
@@ -520,7 +520,7 @@ export default function MaterialsClient({
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Title</label>
+            <label className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.7 }}>Title</label>
             <DarkInput
               name="title"
               value={autoTitle}
@@ -535,27 +535,27 @@ export default function MaterialsClient({
 
           {modal === 'book' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Author</label>
+              <label className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.7 }}>Author</label>
               <DarkInput name="author" placeholder="e.g. Cormen, Leiserson, Rivest, Stein" />
             </div>
           )}
 
           {modal === 'slide' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Lecture Number</label>
+              <label className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.7 }}>Lecture Number</label>
               <DarkInput name="lecture_number" type="number" min={1} placeholder="e.g. 3" />
             </div>
           )}
 
           {modal === 'exam' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Exam Date</label>
+              <label className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.7 }}>Exam Date</label>
               <DarkInput name="exam_date" type="date" />
             </div>
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>
+            <label className="text-sm font-medium" style={{ color: '#ebebeb', opacity: 0.7 }}>
               File * (PDF or PowerPoint, max 50 MB)
             </label>
             <input
@@ -564,13 +564,13 @@ export default function MaterialsClient({
               required
               accept=".pdf,.pptx,.ppt"
               onChange={handleFileChange}
-              className="text-[13px]"
-              style={{ color: '#e8e8e8', opacity: 0.7 }}
+              className="text-sm"
+              style={{ color: '#ebebeb', opacity: 0.7 }}
             />
           </div>
 
           {uploading && (
-            <p className="text-[13px] text-center py-1" style={{ color: '#e9a84c' }}>
+            <p className="text-sm text-center py-1" style={{ color: '#e9a84c' }}>
               Uploading… please wait.
             </p>
           )}
@@ -580,10 +580,10 @@ export default function MaterialsClient({
               type="button"
               onClick={closeModal}
               disabled={uploading}
-              className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-50"
-              style={{ color: '#e8e8e8', opacity: 0.7 }}
+              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              style={{ color: '#ebebeb', opacity: 0.7 }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = '#2a2a2a'
+                (e.currentTarget as HTMLElement).style.background = '#323232'
                 ;(e.currentTarget as HTMLElement).style.opacity = '1'
               }}
               onMouseLeave={e => {
@@ -596,10 +596,10 @@ export default function MaterialsClient({
             <button
               type="submit"
               disabled={uploading}
-              className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-60"
-              style={{ background: '#333333', color: '#e8e8e8' }}
-              onMouseEnter={e => { if (!uploading) (e.currentTarget as HTMLElement).style.background = '#3d3d3d' }}
-              onMouseLeave={e => { if (!uploading) (e.currentTarget as HTMLElement).style.background = '#333333' }}
+              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+              style={{ background: '#3a3a3a', color: '#ebebeb' }}
+              onMouseEnter={e => { if (!uploading) (e.currentTarget as HTMLElement).style.background = '#4a4a4a' }}
+              onMouseLeave={e => { if (!uploading) (e.currentTarget as HTMLElement).style.background = '#3a3a3a' }}
             >
               {uploading ? 'Uploading…' : 'Upload'}
             </button>

@@ -10,29 +10,28 @@ type Course = {
   id: string
   name: string
   code: string | null
-  semester: string | null
   description: string | null
 }
 
 const inputStyle = {
-  background: '#1a1a1a',
-  border: '1px solid #2e2e2e',
-  color: '#e8e8e8',
+  background: 'var(--color-np-base)',
+  border: '1px solid var(--color-np-border)',
+  color: 'var(--color-np-text)',
 } as const
 
 function DarkInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="w-full rounded-lg px-3 py-2 text-[14px] outline-none transition-all"
+      className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-all"
       style={inputStyle}
       onFocus={e => {
-        e.currentTarget.style.borderColor = '#444444'
+        e.currentTarget.style.borderColor = 'var(--color-np-focus)'
         e.currentTarget.style.boxShadow = '0 0 0 2px rgba(233,168,76,0.15)'
         props.onFocus?.(e)
       }}
       onBlur={e => {
-        e.currentTarget.style.borderColor = '#2e2e2e'
+        e.currentTarget.style.borderColor = 'var(--color-np-border)'
         e.currentTarget.style.boxShadow = 'none'
         props.onBlur?.(e)
       }}
@@ -44,14 +43,14 @@ function DarkTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) 
   return (
     <textarea
       {...props}
-      className="w-full rounded-lg px-3 py-2 text-[14px] outline-none transition-all resize-none"
+      className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-all resize-none"
       style={inputStyle}
       onFocus={e => {
-        e.currentTarget.style.borderColor = '#444444'
+        e.currentTarget.style.borderColor = 'var(--color-np-focus)'
         e.currentTarget.style.boxShadow = '0 0 0 2px rgba(233,168,76,0.15)'
       }}
       onBlur={e => {
-        e.currentTarget.style.borderColor = '#2e2e2e'
+        e.currentTarget.style.borderColor = 'var(--color-np-border)'
         e.currentTarget.style.boxShadow = 'none'
       }}
     />
@@ -87,7 +86,6 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
         await createCourse({
           name,
           code: (form.elements.namedItem('code') as HTMLInputElement).value.trim(),
-          semester: (form.elements.namedItem('semester') as HTMLInputElement).value.trim(),
           description: (form.elements.namedItem('description') as HTMLTextAreaElement).value.trim(),
         })
         form.reset()
@@ -114,7 +112,6 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
         await updateCourse(course.id, {
           name,
           code: course.code ?? '',
-          semester: course.semester ?? '',
           description: course.description ?? '',
         })
         router.refresh()
@@ -140,13 +137,13 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
     <>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-[28px] font-bold" style={{ color: '#e8e8e8' }}>My Courses</h1>
+        <h1 className="text-3xl font-bold" style={{ color: 'var(--color-np-text)' }}>My Courses</h1>
         <button
           onClick={openDialog}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors"
-          style={{ background: '#333333', color: '#e8e8e8' }}
-          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#3d3d3d')}
-          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = '#333333')}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+          style={{ background: 'var(--color-np-active)', color: 'var(--color-np-text)' }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'var(--color-np-focus)')}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'var(--color-np-active)')}
         >
           <span className="text-base leading-none">+</span>
           New Course
@@ -154,9 +151,9 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
       </div>
 
       {courses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-32" style={{ color: '#e8e8e8', opacity: 0.3 }}>
-          <p className="text-[15px] font-medium mb-1">No courses yet</p>
-          <p className="text-[13px]">Create your first course to get started.</p>
+        <div className="flex flex-col items-center justify-center py-32" style={{ color: 'var(--color-np-text)', opacity: 0.3 }}>
+          <p className="text-base font-medium mb-1">No courses yet</p>
+          <p className="text-sm">Create your first course to get started.</p>
         </div>
       ) : (
         <div className="flex flex-col">
@@ -164,8 +161,8 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
             <div
               key={course.id}
               className="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all"
-              style={{ color: '#e8e8e8' }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#1e1e1e')}
+              style={{ color: 'var(--color-np-text)' }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'var(--color-np-surface)')}
               onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
             >
               {editingId !== course.id && (
@@ -189,18 +186,18 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
                       if (e.key === 'Enter') saveEdit(course)
                       if (e.key === 'Escape') setEditingId(null)
                     }}
-                    className="w-full text-[14px] bg-transparent outline-none"
-                    style={{ color: '#e8e8e8', borderBottom: '1px solid #e9a84c' }}
+                    className="w-full text-sm bg-transparent outline-none"
+                    style={{ color: 'var(--color-np-text)', borderBottom: '1px solid var(--color-np-amber)' }}
                   />
                 ) : (
-                  <span className="text-[14px] truncate block" style={{ opacity: 0.85 }}>
+                  <span className="text-sm truncate block" style={{ opacity: 0.85 }}>
                     {course.name}
                   </span>
                 )}
               </div>
 
               {course.code && (
-                <span className="font-mono text-[11px] shrink-0" style={{ opacity: 0.35 }}>
+                <span className="font-mono text-[0.6875rem] shrink-0" style={{ opacity: 0.35 }}>
                   {course.code}
                 </span>
               )}
@@ -211,8 +208,8 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
                   onClick={() => startEdit(course)}
                   title="Rename"
                   className="p-1 rounded transition-colors"
-                  style={{ color: '#e8e8e8', opacity: 0.4 }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#2a2a2a'; (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
+                  style={{ color: 'var(--color-np-text)', opacity: 0.4 }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-np-hover)'; (e.currentTarget as HTMLElement).style.opacity = '0.9' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.opacity = '0.4' }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -224,9 +221,9 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
                   onClick={() => handleDelete(course.id, course.name)}
                   title="Delete"
                   className="p-1 rounded transition-colors"
-                  style={{ color: '#e8e8e8', opacity: 0.4 }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(240,68,56,0.15)'; (e.currentTarget as HTMLElement).style.color = '#f04438'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#e8e8e8'; (e.currentTarget as HTMLElement).style.opacity = '0.4' }}
+                  style={{ color: 'var(--color-np-text)', opacity: 0.4 }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(240,68,56,0.15)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-np-red)'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-np-text)'; (e.currentTarget as HTMLElement).style.opacity = '0.4' }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6"/>
@@ -245,39 +242,33 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
       <dialog
         ref={dialogRef}
         className="rounded-xl p-0 w-full max-w-md backdrop:bg-black/60"
-        style={{ background: '#222222', border: '1px solid #2e2e2e', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+        style={{ background: 'var(--color-np-hover)', border: '1px solid var(--color-np-border)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
         onClose={() => setFormError('')}
       >
         <form onSubmit={handleCreate} className="p-6 flex flex-col gap-4">
-          <h2 className="text-[18px] font-semibold" style={{ color: '#e8e8e8' }}>New Course</h2>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--color-np-text)' }}>New Course</h2>
 
           {formError && (
             <p
-              className="text-[13px] px-3 py-2 rounded-lg"
-              style={{ color: '#f04438', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}
+              className="text-sm px-3 py-2 rounded-lg"
+              style={{ color: 'var(--color-np-red)', background: 'rgba(240,68,56,0.1)', border: '1px solid rgba(240,68,56,0.2)' }}
             >
               {formError}
             </p>
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Name *</label>
+            <label className="text-sm font-medium" style={{ color: 'var(--color-np-text)', opacity: 0.7 }}>Name *</label>
             <DarkInput name="name" required placeholder="e.g. Introduction to Algorithms" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Code</label>
-              <DarkInput name="code" placeholder="e.g. CS301" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Semester</label>
-              <DarkInput name="semester" placeholder="e.g. Spring 2026" />
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium" style={{ color: 'var(--color-np-text)', opacity: 0.7 }}>Code</label>
+            <DarkInput name="code" placeholder="e.g. CS301" />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[13px] font-medium" style={{ color: '#e8e8e8', opacity: 0.7 }}>Description</label>
+            <label className="text-sm font-medium" style={{ color: 'var(--color-np-text)', opacity: 0.7 }}>Description</label>
             <DarkTextarea name="description" rows={3} placeholder="Optional" />
           </div>
 
@@ -285,9 +276,9 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
             <button
               type="button"
               onClick={closeDialog}
-              className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors"
-              style={{ color: '#e8e8e8', opacity: 0.7 }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#2a2a2a'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
+              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              style={{ color: 'var(--color-np-text)', opacity: 0.7 }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-np-hover)'; (e.currentTarget as HTMLElement).style.opacity = '1' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
             >
               Cancel
@@ -295,10 +286,10 @@ export default function CoursesClient({ courses }: { courses: Course[] }) {
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-60"
-              style={{ background: '#333333', color: '#e8e8e8' }}
-              onMouseEnter={e => { if (!isPending) (e.currentTarget as HTMLElement).style.background = '#3d3d3d' }}
-              onMouseLeave={e => { if (!isPending) (e.currentTarget as HTMLElement).style.background = '#333333' }}
+              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+              style={{ background: 'var(--color-np-active)', color: 'var(--color-np-text)' }}
+              onMouseEnter={e => { if (!isPending) (e.currentTarget as HTMLElement).style.background = 'var(--color-np-focus)' }}
+              onMouseLeave={e => { if (!isPending) (e.currentTarget as HTMLElement).style.background = 'var(--color-np-active)' }}
             >
               {isPending ? 'Creating…' : 'Create Course'}
             </button>

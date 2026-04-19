@@ -1,17 +1,34 @@
 @import "tailwindcss";
 
 @theme {
-  --color-np-base:    #1a1a1a;
-  --color-np-sidebar: #111111;
-  --color-np-topbar:  #161616;
-  --color-np-card:    #222222;
-  --color-np-hover:   #2a2a2a;
-  --color-np-active:  #333333;
-  --color-np-border:  #2e2e2e;
-  --color-np-text:    #e8e8e8;
-  --color-np-amber:   #e9a84c;
-  --color-np-blue:    #4d94ff;
-  --color-np-red:     #f04438;
+  /* Backgrounds */
+  --color-np-base:          #191919;
+  --color-np-sidebar:       #1f1f1f;
+  --color-np-sidebar-hover: #232323;
+  --color-np-surface:       #262626;
+  --color-np-card:          #2a2a2a;
+  --color-np-selected:      #2d2d2d;
+
+  /* Interactive */
+  --color-np-hover:         #323232;
+  --color-np-active:        #3a3a3a;
+  --color-np-active-hover:  #444444;
+  --color-np-border-hover:  #404040;
+  --color-np-focus:         #4a4a4a;
+
+  /* Chrome */
+  --color-np-border:        #2d2d2d;
+  --color-np-text:          #ebebeb;
+  --color-np-text-on-accent:#111111;
+
+  /* Accents */
+  --color-np-amber:         #e9a84c;
+  --color-np-amber-hover:   #f0b85e;
+  --color-np-blue:          #4d94ff;
+  --color-np-red:           #f04438;
+  --color-np-folder:        #6b9fd4;
+
+  /* Fonts */
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
 }
@@ -26,8 +43,8 @@ html, body {
 }
 
 body {
-  background-color: #1a1a1a;
-  color: #e8e8e8;
+  background-color: var(--color-np-base);
+  color: var(--color-np-text);
   font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

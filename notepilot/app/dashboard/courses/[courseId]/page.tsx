@@ -19,7 +19,7 @@ export default async function CoursePage({
 
   const { data: course } = await supabase
     .from('courses')
-    .select('id, name, code, semester, description')
+    .select('id, name, code, description')
     .eq('id', courseId)
     .eq('user_id', user.id)
     .single()
@@ -27,7 +27,7 @@ export default async function CoursePage({
   if (!course) notFound()
 
   // Unified add panel — handles all add types
-  if (add === 'item' || add === 'book' || add === 'slide' || add === 'exam' || add === 'folder') {
+  if (add !== undefined) {
     // Map legacy ?add=book to initialType
     const initialType = add === 'item'
       ? (type as 'folder' | 'book' | 'slide' | 'exam' | null) ?? null
@@ -39,7 +39,6 @@ export default async function CoursePage({
         courseId={courseId}
         courseName={course.name}
         parentFolderId={parent ?? null}
-        semester={null}
         initialType={initialType}
       />
     )
@@ -56,7 +55,6 @@ export default async function CoursePage({
       courseId={courseId}
       courseName={course.name}
       courseCode={course.code}
-      courseSemester={course.semester}
       courseDescription={course.description}
       initialBooks={books ?? []}
       initialSlides={slides ?? []}
